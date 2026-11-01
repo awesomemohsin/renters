@@ -18,3 +18,4 @@ node_modules
 tsconfig.tsbuildinfo
 *.log
 AGENTS.md
+backups/

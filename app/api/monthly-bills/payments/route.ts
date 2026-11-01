@@ -209,6 +209,16 @@ export async function POST(request: Request) {
           throw new Error('INVALID_PAYMENT_METHOD')
         }
 
+        if (transactionReference) {
+          const duplicate = await Payment.findOne({
+            transactionReference,
+            status: 'completed',
+          }).session(session)
+          if (duplicate) {
+            throw new Error('DUPLICATE_TRANSACTION_REFERENCE')
+          }
+        }
+
         const amountReceivedNum = Number(body.amountReceived)
         const rentAllocNum = Number(body.rentAllocation ?? 0)
         const elecAllocNum = Number(body.electricityAllocation ?? 0)
@@ -470,6 +480,12 @@ export async function POST(request: Request) {
         return NextResponse.json(
           { error: 'Please select a valid payment method.' },
           { status: 400 },
+        )
+      }
+      if (code === 'DUPLICATE_TRANSACTION_REFERENCE') {
+        return NextResponse.json(
+          { error: 'A completed payment with this transaction reference already exists.' },
+          { status: 409 },
         )
       }
       if (code === 'NEGATIVE_OR_INVALID_AMOUNT' || code === 'ZERO_PAYMENT_AMOUNT') {
