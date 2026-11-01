@@ -50,6 +50,10 @@ export async function POST(request: Request) {
     const billingMonth =
       typeof body.billingMonth === 'string' ? body.billingMonth.trim() : ''
     const allowUnfinalizedElectricity = Boolean(body.allowUnfinalizedElectricity)
+    const targetResidentId =
+      typeof body.residentId === 'string' && body.residentId.trim()
+        ? body.residentId.trim()
+        : null
     const rawOverrides = body.wifiCharges ?? body.wifiOverrides
     const wifiOverrides: Record<string, number> =
       rawOverrides && typeof rawOverrides === 'object'
@@ -75,10 +79,18 @@ export async function POST(request: Request) {
       await session.withTransaction(async () => {
         generatedCount = 0
         skippedCount = 0
-        const activeResidents = await Resident.find({ status: 'active' })
+        const residentQuery: Record<string, unknown> = { status: 'active' }
+        if (targetResidentId && mongoose.isValidObjectId(targetResidentId)) {
+          residentQuery._id = new mongoose.Types.ObjectId(targetResidentId)
+        }
+        const activeResidents = await Resident.find(residentQuery)
           .populate('roomId')
           .session(session)
-        const existingBills = await MonthlyBill.find({ billingMonth })
+        const billQuery: Record<string, unknown> = { billingMonth }
+        if (targetResidentId && mongoose.isValidObjectId(targetResidentId)) {
+          billQuery.residentId = new mongoose.Types.ObjectId(targetResidentId)
+        }
+        const existingBills = await MonthlyBill.find(billQuery)
           .session(session)
           .lean()
         const electricityCycle = await MonthlyElectricityCycle.findOne({
@@ -173,16 +185,19 @@ export async function POST(request: Request) {
           const resIdStr = String(res._id)
           const alloc = allocByRoomId.get(roomIdStr)
 
-          const electricityUnits =
-            alloc && alloc.status === 'finalized' ? alloc.consumption : 0
-          const electricityMainMeterShare =
-            alloc && alloc.status === 'finalized' ? alloc.mainMeterShare : 0
-          const electricityAdditionalCharge =
-            alloc && alloc.status === 'finalized' ? alloc.additionalCharge : 0
-          const totalElectricity =
-            alloc && alloc.status === 'finalized'
-              ? alloc.finalElectricityAmount
-              : 0
+          const hasUsableAllocation = Boolean(
+            alloc && (alloc.status === 'finalized' || allowUnfinalizedElectricity),
+          )
+          const electricityUnits = hasUsableAllocation ? (alloc?.consumption ?? 0) : 0
+          const electricityMainMeterShare = hasUsableAllocation
+            ? (alloc?.mainMeterShare ?? 0)
+            : 0
+          const electricityAdditionalCharge = hasUsableAllocation
+            ? (alloc?.additionalCharge ?? 0)
+            : 0
+          const totalElectricity = hasUsableAllocation
+            ? (alloc?.finalElectricityAmount ?? 0)
+            : 0
 
           const activeWifi = wifiConfigByResidentId.get(resIdStr)
           const defaultWifi = activeWifi
@@ -216,7 +231,7 @@ export async function POST(request: Request) {
                 floor: roomObj.floor,
                 monthlyRent: res.monthlyRent,
                 electricityAllocationId:
-                  alloc && alloc.status === 'finalized' ? alloc._id : null,
+                  hasUsableAllocation && alloc ? alloc._id : null,
                 electricityUnits,
                 electricityMainMeterShare,
                 electricityAdditionalCharge,

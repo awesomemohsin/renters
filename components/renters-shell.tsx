@@ -29,6 +29,7 @@ const navigation: NavItem[] = [
   { label: 'Utilities', icon: Zap, href: '/utilities' },
   { label: 'WiFi', icon: Wifi, href: '/wifi' },
   { label: 'Monthly records', icon: CalendarDays, href: '/monthly-records' },
+  { label: 'Reports', icon: BarChart3, href: '/reports' },
 ]
 
 const foundationCards: { label: string; value: string; detail: string; icon: LucideIcon }[] = [
@@ -44,6 +45,7 @@ const pageTitles: Record<string, string> = {
   '/utilities': 'Electricity meters',
   '/wifi': 'WiFi & devices',
   '/monthly-records': 'Monthly billing & payments',
+  '/reports': 'Financial reports & analytics',
 }
 
 const moduleStatusCards = [
@@ -51,6 +53,7 @@ const moduleStatusCards = [
   { label: 'Resident details', status: 'Configured', href: '/residents' },
   { label: 'Utility meters', status: 'Configured', href: '/utilities' },
   { label: 'WiFi & devices', status: 'Configured', href: '/wifi' },
+  { label: 'Reports & analytics', status: 'Ready', href: '/reports' },
 ]
 
 export function RentersShell({
