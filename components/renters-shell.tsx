@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { SignOutButton } from './sign-out-button'
 import {
   ArrowUpRight,
   BarChart3,
@@ -125,6 +126,9 @@ export function RentersShell({
             <p className="text-sm font-medium">Private workspace</p>
             <p className="mt-1 text-xs leading-5 text-slate-500">Built for one building and one owner.</p>
           </div>
+          <div className="mt-2">
+            <SignOutButton className="w-full justify-center" />
+          </div>
         </div>
       </aside>
 
@@ -134,25 +138,30 @@ export function RentersShell({
             <p className="text-xs font-medium text-slate-500">Property management</p>
             <h1 className="text-lg font-semibold tracking-tight">{headerTitle}</h1>
           </div>
-          <nav aria-label="Mobile navigation" className="flex items-center gap-1 lg:hidden">
-            {navigation
-              .filter((item): item is NavItem & { href: string } => Boolean(item.href))
-              .map((item) => {
-                const isActive = item.href === currentPath
-                return (
-                  <Link
-                    key={item.label}
-                    href={item.href}
-                    aria-current={isActive ? 'page' : undefined}
-                    className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-                      isActive ? 'bg-slate-950 text-white' : 'text-slate-600 hover:bg-slate-100'
-                    }`}
-                  >
-                    {item.label}
-                  </Link>
-                )
-              })}
-          </nav>
+          <div className="flex items-center gap-2">
+            <nav aria-label="Mobile navigation" className="flex items-center gap-1 lg:hidden">
+              {navigation
+                .filter((item): item is NavItem & { href: string } => Boolean(item.href))
+                .map((item) => {
+                  const isActive = item.href === currentPath
+                  return (
+                    <Link
+                      key={item.label}
+                      href={item.href}
+                      aria-current={isActive ? 'page' : undefined}
+                      className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                        isActive ? 'bg-slate-950 text-white' : 'text-slate-600 hover:bg-slate-100'
+                      }`}
+                    >
+                      {item.label}
+                    </Link>
+                  )
+                })}
+            </nav>
+            <div className="lg:hidden">
+              <SignOutButton className="p-1.5" />
+            </div>
+          </div>
         </header>
 
         {children ?? (
