@@ -19,7 +19,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { formatCurrency, formatRoomNumber } from '@/lib/utils'
-import { WIFI_DEVICE_TYPES, type WiFiDeviceType } from '@/models/wifi-device'
+import { WIFI_DEVICE_TYPES, type WiFiDeviceType } from '@/lib/wifi-types'
 
 type DeviceHistoryItem = {
   action: string

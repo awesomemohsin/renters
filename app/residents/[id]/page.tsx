@@ -20,7 +20,7 @@ import {
 import { RentersShell } from '@/components/renters-shell'
 import { Button } from '@/components/ui/button'
 import { formatCurrency, formatRoomNumber } from '@/lib/utils'
-import { WIFI_DEVICE_TYPES, type WiFiDeviceType } from '@/models/wifi-device'
+import { WIFI_DEVICE_TYPES, type WiFiDeviceType } from '@/lib/wifi-types'
 
 type Resident = {
   _id: string

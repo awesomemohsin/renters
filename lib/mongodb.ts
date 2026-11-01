@@ -29,10 +29,11 @@ export async function connectToDatabase() {
 
   if (!cached.promise) {
     if (mongodbUri.startsWith('mongodb+srv://')) {
-      const servers = dns.getServers()
-      if (servers.length === 0 || servers.every((s) => s === '127.0.0.1' || s === '::1')) {
+      try {
         dns.setServers(['8.8.8.8', '1.1.1.1'])
         dns.promises.setServers(['8.8.8.8', '1.1.1.1'])
+      } catch {
+        // Fallback silently if environment prevents setting custom DNS servers
       }
     }
 
