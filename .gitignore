@@ -17,3 +17,4 @@ node_modules
 .DS_Store
 tsconfig.tsbuildinfo
 *.log
+AGENTS.md
