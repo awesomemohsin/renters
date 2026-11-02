@@ -45,7 +45,7 @@ function uint8ArrayToBase64Url(bytes: Uint8Array): string {
 
 function base64UrlToUint8Array(str: string): Uint8Array {
   if (typeof Buffer !== 'undefined') {
-    return new Uint8Array(Buffer.from(str, 'base64url'))
+    return Uint8Array.from(Buffer.from(str, 'base64url'))
   }
   let base64 = str.replace(/-/g, '+').replace(/_/g, '/')
   while (base64.length % 4) {
@@ -134,7 +134,7 @@ export async function verifySessionToken(
     const isValid = await crypto.subtle.verify(
       'HMAC',
       key,
-      sigBytes,
+      sigBytes as BufferSource,
       enc.encode(payloadB64),
     )
 
