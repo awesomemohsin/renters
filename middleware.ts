@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server'
-import { SESSION_COOKIE_NAME, verifySessionToken } from '@/lib/auth'
+import { SESSION_COOKIE_NAME, verifySessionToken } from '@/lib/session'
 
 // Public routes that do not require authentication
 const PUBLIC_PATHS = new Set([

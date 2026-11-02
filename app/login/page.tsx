@@ -4,6 +4,7 @@ import { Suspense, useState, useTransition } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Building2, Eye, EyeOff, Lock, ShieldAlert } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { sanitizeRedirectPath } from '@/lib/redirect'
 
 function LoginForm() {
   const router = useRouter()
@@ -13,7 +14,7 @@ function LoginForm() {
   const [errorMessage, setErrorMessage] = useState('')
   const [isPending, startTransition] = useTransition()
 
-  const destination = searchParams.get('from') || '/'
+  const destination = sanitizeRedirectPath(searchParams.get('from'))
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()

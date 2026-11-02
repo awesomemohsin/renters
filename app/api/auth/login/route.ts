@@ -3,28 +3,17 @@ import {
   checkLoginRateLimit,
   createSessionToken,
   DEFAULT_SESSION_MAX_AGE,
+  getClientIp,
   recordFailedLogin,
   resetLoginRateLimit,
   SESSION_COOKIE_NAME,
   verifyAdminPassword,
 } from '@/lib/auth'
 
-function getClientIp(request: Request): string {
-  const forwarded = request.headers.get('x-forwarded-for')
-  if (forwarded) {
-    return forwarded.split(',')[0].trim()
-  }
-  const realIp = request.headers.get('x-real-ip')
-  if (realIp) {
-    return realIp.trim()
-  }
-  return '127.0.0.1'
-}
-
 export async function POST(request: Request) {
   try {
     const ip = getClientIp(request)
-    const rateCheck = checkLoginRateLimit(ip)
+    const rateCheck = await checkLoginRateLimit(ip)
 
     if (!rateCheck.allowed) {
       return NextResponse.json(
@@ -53,7 +42,7 @@ export async function POST(request: Request) {
     const isValid = await verifyAdminPassword(password)
 
     if (!isValid) {
-      const failStatus = recordFailedLogin(ip)
+      const failStatus = await recordFailedLogin(ip)
       if (failStatus.locked) {
         return NextResponse.json(
           {
@@ -74,8 +63,8 @@ export async function POST(request: Request) {
       )
     }
 
-    // Success
-    resetLoginRateLimit(ip)
+    // Success: reset rate limit attempts for this IP
+    await resetLoginRateLimit(ip)
     const token = await createSessionToken({ role: 'admin' })
 
     const response = NextResponse.json({
@@ -97,10 +86,11 @@ export async function POST(request: Request) {
 
     return response
   } catch (error) {
-    console.error('Login error:', error)
+    console.error('Login route error:', error)
+    // Fail-closed: Return 503 when database or auth backend is unreachable
     return NextResponse.json(
-      { error: 'Authentication service unavailable.' },
-      { status: 500 },
+      { error: 'Authentication service temporarily unavailable. Please try again later.' },
+      { status: 503 },
     )
   }
 }
