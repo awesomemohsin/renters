@@ -24,7 +24,7 @@ export async function GET(request: Request) {
 
     const [
       rooms,
-      activeResidents,
+      allResidents,
       subMeters,
       readings,
       priorReadings,
@@ -36,7 +36,7 @@ export async function GET(request: Request) {
       billMonths,
     ] = await Promise.all([
       Room.find().sort({ roomNumber: 1 }).lean(),
-      Resident.find({ status: 'active' }).populate('roomId').lean(),
+      Resident.find().sort({ createdAt: -1 }).lean(),
       SubMeter.find().sort({ roomNumber: 1 }).lean(),
       MonthlySubMeterReading.find({ billingMonth }).lean(),
       MonthlySubMeterReading.find({ billingMonth: { $lt: billingMonth } })
@@ -59,12 +59,21 @@ export async function GET(request: Request) {
     ])
     const availableMonths = Array.from(allMonthsSet).sort().reverse()
 
-    // Map helper lookups
-    const residentByRoomId = new Map(
-      activeResidents
-        .filter((r) => r.roomId)
-        .map((r) => [String((r.roomId as unknown as { _id: unknown })._id || r.roomId), r]),
-    )
+    // Group active residents and past residents by roomId
+    const residentByRoomId = new Map<string, (typeof allResidents)[number]>()
+    const pastResidentsByRoomId = new Map<string, Array<(typeof allResidents)[number]>>()
+
+    for (const r of allResidents) {
+      if (!r.roomId) continue
+      const roomIdStr = String(r.roomId)
+      if (r.status === 'active') {
+        residentByRoomId.set(roomIdStr, r)
+      } else {
+        const list = pastResidentsByRoomId.get(roomIdStr) || []
+        list.push(r)
+        pastResidentsByRoomId.set(roomIdStr, list)
+      }
+    }
     const subMeterByRoomId = new Map(subMeters.map((s) => [String(s.roomId), s]))
     const readingByRoomId = new Map(readings.map((r) => [String(r.roomId), r]))
     const allocByRoomId = new Map(allocations.map((a) => [String(a.roomId), a]))
@@ -143,9 +152,30 @@ export async function GET(request: Request) {
               fullName: resident.fullName,
               phone: resident.phone,
               email: resident.email,
+              nidNumber: resident.nidNumber || '',
+              photoUrl: resident.profilePhoto?.url || '',
+              partnerName: resident.partnerName || resident.spouseName || '',
+              partnerPhone: resident.partnerPhone || '',
+              partnerNid: resident.partnerNid || '',
+              permanentAddress: resident.permanentAddress || '',
+              nidFrontUrl: resident.nidFront?.url || '',
+              nidBackUrl: resident.nidBack?.url || '',
+              moveInDate: resident.moveInDate || '',
               status: resident.status,
             }
           : null,
+        pastResidents: (pastResidentsByRoomId.get(roomIdStr) || []).map((pr) => ({
+          _id: String(pr._id),
+          fullName: pr.fullName,
+          phone: pr.phone,
+          nidNumber: pr.nidNumber || '',
+          photoUrl: pr.profilePhoto?.url || '',
+          partnerName: pr.partnerName || pr.spouseName || '',
+          permanentAddress: pr.permanentAddress || '',
+          moveInDate: pr.moveInDate || '',
+          moveOutDate: pr.moveOutDate || '',
+          status: pr.status,
+        })),
         subMeter: subMeter
           ? {
               _id: String(subMeter._id),

@@ -594,17 +594,25 @@ export function WiFiManagementPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3.5 text-right">
-                    <div className="flex items-center justify-end gap-1.5">
-                      <Button size="xs" variant="outline" onClick={() => openConfigModal(row)}>
-                        <Pencil className="size-3" /> Profile
+                    <div className="flex items-center justify-end gap-2">
+                      <Button
+                        size="xs"
+                        variant="outline"
+                        className="border-slate-300 bg-white text-slate-800 shadow-xs hover:bg-slate-100 hover:text-slate-900"
+                        onClick={() => openConfigModal(row)}
+                      >
+                        <Pencil className="size-3 text-slate-600" />
+                        <span className="font-medium">Profile</span>
                       </Button>
                       <Button
                         size="xs"
                         variant="secondary"
+                        className="border border-slate-200 bg-slate-100 text-slate-800 shadow-xs hover:bg-slate-200 hover:text-slate-900"
                         onClick={() => openDeviceModal(row)}
                         disabled={!row.hasConfiguration && row.residentStatus === 'inactive'}
                       >
-                        <Cpu className="size-3" /> Devices ({row.activeDeviceCount})
+                        <Cpu className="size-3 text-slate-600" />
+                        <span className="font-medium">Devices ({row.activeDeviceCount})</span>
                       </Button>
                     </div>
                   </td>

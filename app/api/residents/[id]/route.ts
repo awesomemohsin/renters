@@ -12,6 +12,9 @@ import { WiFiDevice } from '@/models/wifi-device'
 
 const STRING_FIELDS = [
   'fullName',
+  'partnerName',
+  'partnerPhone',
+  'partnerNid',
   'spouseName',
   'fatherName',
   'motherName',
@@ -98,6 +101,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
           resident.moveOutDate = today
           resident.wifiCharge = 0
           // Historical roomId is preserved intentionally for historical records.
+
           await resident.save({ session })
 
           // Deactivate any active WiFi configurations for this resident while preserving history
@@ -169,6 +173,19 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
               }
               resident.wifiCharge = wifi
             }
+          }
+
+          if (body.profilePhoto !== undefined) {
+            resident.profilePhoto = body.profilePhoto
+          }
+          if (body.nidFront !== undefined) {
+            resident.nidFront = body.nidFront
+          }
+          if (body.nidBack !== undefined) {
+            resident.nidBack = body.nidBack
+          }
+          if (body.otherDocuments !== undefined && Array.isArray(body.otherDocuments)) {
+            resident.otherDocuments = body.otherDocuments
           }
 
           await resident.save({ session })

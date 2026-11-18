@@ -8,6 +8,9 @@ const documentSchema = new Schema({
 
 const residentSchema = new Schema({
   fullName: { type: String, required: true, trim: true, minlength: 2 },
+  partnerName: { type: String, trim: true, default: '' },
+  partnerPhone: { type: String, trim: true, default: '' },
+  partnerNid: { type: String, trim: true, default: '' },
   spouseName: { type: String, trim: true, default: '' },
   fatherName: { type: String, trim: true, default: '' },
   motherName: { type: String, trim: true, default: '' },

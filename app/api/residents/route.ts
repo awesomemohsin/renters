@@ -114,8 +114,16 @@ export async function POST(request: Request) {
     const body = await request.json()
     const fullName = cleanString(body.fullName)
     const phone = cleanString(body.phone)
-    const moveInDate = cleanString(body.moveInDate)
+    const nidNumber = cleanString(body.nidNumber)
+    const moveInDate = cleanString(body.moveInDate) || new Date().toISOString().slice(0, 10)
     const roomId = cleanString(body.roomId)
+    const photoUrl = cleanString(body.photoUrl || body.profilePhoto?.url)
+    const partnerName = cleanString(body.partnerName || body.spouseName)
+    const partnerPhone = cleanString(body.partnerPhone)
+    const partnerNid = cleanString(body.partnerNid)
+    const permanentAddress = cleanString(body.permanentAddress)
+    const nidFrontUrl = cleanString(body.nidFrontUrl || body.nidFront?.url)
+    const nidBackUrl = cleanString(body.nidBackUrl || body.nidBack?.url)
     const hasMonthlyRent = body.monthlyRent !== '' && body.monthlyRent !== null && body.monthlyRent !== undefined
     const monthlyRent = hasMonthlyRent ? Number(body.monthlyRent) : NaN
     const hasSecurityDeposit = body.securityDeposit !== '' && body.securityDeposit !== null && body.securityDeposit !== undefined
@@ -123,8 +131,14 @@ export async function POST(request: Request) {
     const hasWifiCharge = body.wifiCharge !== '' && body.wifiCharge !== null && body.wifiCharge !== undefined
     const wifiCharge = hasWifiCharge ? Number(body.wifiCharge) : 0
 
-    if (!fullName || !phone || !moveInDate || !roomId || !hasMonthlyRent) {
+    if (!fullName || !phone || !roomId || !hasMonthlyRent) {
       return NextResponse.json({ error: 'Please complete all required fields.' }, { status: 400 })
+    }
+    if (!nidNumber) {
+      return NextResponse.json({ error: "Renter's National ID (NID) is required." }, { status: 400 })
+    }
+    if (!photoUrl) {
+      return NextResponse.json({ error: "Renter's photograph is mandatory. Please upload an image." }, { status: 400 })
     }
     if (fullName.length < 2) {
       return NextResponse.json({ error: 'Full name must be at least 2 characters.' }, { status: 400 })
@@ -173,14 +187,17 @@ export async function POST(request: Request) {
           [
             {
               fullName,
-              spouseName: cleanString(body.spouseName),
+              partnerName,
+              partnerPhone,
+              partnerNid,
+              spouseName: partnerName || cleanString(body.spouseName),
               fatherName: cleanString(body.fatherName),
               motherName: cleanString(body.motherName),
               phone,
               alternativePhone: cleanString(body.alternativePhone),
-              nidNumber: cleanString(body.nidNumber),
+              nidNumber,
               dateOfBirth: cleanString(body.dateOfBirth),
-              permanentAddress: cleanString(body.permanentAddress),
+              permanentAddress,
               presentAddress: cleanString(body.presentAddress),
               occupation: cleanString(body.occupation),
               emergencyContact: cleanString(body.emergencyContact),
@@ -192,9 +209,15 @@ export async function POST(request: Request) {
               moveInDate,
               moveOutDate: null,
               status: 'active',
-              profilePhoto: { unavailable: true },
-              nidFront: { unavailable: true },
-              nidBack: { unavailable: true },
+              profilePhoto: photoUrl
+                ? { url: photoUrl, name: `${fullName}-photo`, unavailable: false }
+                : { unavailable: true },
+              nidFront: nidFrontUrl
+                ? { url: nidFrontUrl, name: `${fullName}-nid-front`, unavailable: false }
+                : { unavailable: true },
+              nidBack: nidBackUrl
+                ? { url: nidBackUrl, name: `${fullName}-nid-back`, unavailable: false }
+                : { unavailable: true },
             },
           ],
           { session },

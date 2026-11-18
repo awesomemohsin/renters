@@ -1,11 +1,12 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   AlertCircle,
   ArrowRight,
   Building2,
   Calendar,
+  Camera,
   Check,
   CheckCircle2,
   ChevronLeft,
@@ -15,10 +16,14 @@ import {
   Cpu,
   CreditCard,
   DoorOpen,
+  FileText,
   Filter,
   Flame,
   HelpCircle,
+  History,
   Home,
+  Image as ImageIcon,
+  LogOut,
   Pencil,
   Phone,
   Plus,
@@ -27,12 +32,30 @@ import {
   ShieldCheck,
   Sparkles,
   TrendingUp,
+  Upload,
+  User,
+  UserCheck,
+  UserMinus,
+  UserPlus,
   Users,
   Wifi,
   X,
   Zap,
 } from 'lucide-react'
 import { formatCurrency, formatRoomNumber } from '@/lib/utils'
+
+type PastResident = {
+  _id: string
+  fullName: string
+  phone: string
+  nidNumber: string
+  photoUrl: string
+  partnerName: string
+  permanentAddress: string
+  moveInDate: string
+  moveOutDate: string
+  status: string
+}
 
 type RoomSummary = {
   _id: string
@@ -45,8 +68,18 @@ type RoomSummary = {
     fullName: string
     phone: string
     email: string
+    nidNumber: string
+    photoUrl: string
+    partnerName: string
+    partnerPhone: string
+    partnerNid: string
+    permanentAddress: string
+    nidFrontUrl: string
+    nidBackUrl: string
+    moveInDate: string
     status: string
   } | null
+  pastResidents: PastResident[]
   subMeter: {
     _id: string
     meterNumber: string
@@ -125,7 +158,31 @@ export function DashboardPage() {
 
   // Active drawer room
   const [activeRoom, setActiveRoom] = useState<RoomSummary | null>(null)
-  const [drawerTab, setDrawerTab] = useState<'electricity' | 'wifi' | 'bill' | 'payment'>('electricity')
+  const [drawerTab, setDrawerTab] = useState<'renter' | 'electricity' | 'wifi' | 'bill' | 'payment'>('renter')
+
+  // --- Renter Form State (Add Renter) ---
+  const [renterName, setRenterName] = useState('')
+  const [renterPhone, setRenterPhone] = useState('')
+  const [renterNid, setRenterNid] = useState('')
+  const [renterPhotoUrl, setRenterPhotoUrl] = useState('')
+  const [partnerName, setPartnerName] = useState('')
+  const [partnerPhone, setPartnerPhone] = useState('')
+  const [partnerNid, setPartnerNid] = useState('')
+  const [permanentAddress, setPermanentAddress] = useState('')
+  const [nidFrontUrl, setNidFrontUrl] = useState('')
+  const [nidBackUrl, setNidBackUrl] = useState('')
+  const [renterRent, setRenterRent] = useState('')
+  const [renterMoveInDate, setRenterMoveInDate] = useState(new Date().toISOString().slice(0, 10))
+  const [savingRenter, setSavingRenter] = useState(false)
+  const [uploadingPhoto, setUploadingPhoto] = useState(false)
+  const [uploadingDoc, setUploadingDoc] = useState<'front' | 'back' | null>(null)
+  const [renterMessage, setRenterMessage] = useState<{ text: string; isError: boolean } | null>(null)
+  const [vacatingRenter, setVacatingRenter] = useState(false)
+
+  // File input refs
+  const photoInputRef = useRef<HTMLInputElement>(null)
+  const nidFrontInputRef = useRef<HTMLInputElement>(null)
+  const nidBackInputRef = useRef<HTMLInputElement>(null)
 
   // Reading form state
   const [readingPrev, setReadingPrev] = useState<number>(0)
@@ -172,12 +229,27 @@ export function DashboardPage() {
   }, [selectedMonth])
 
   // Open drawer for a room
-  const handleOpenRoom = (room: RoomSummary) => {
+  const handleOpenRoom = (room: RoomSummary, defaultTab?: typeof drawerTab) => {
     setActiveRoom(room)
     setReadingMessage(null)
     setWifiMessage(null)
     setBillMessage(null)
     setPaymentMessage(null)
+    setRenterMessage(null)
+
+    // Pre-populate Renter form
+    setRenterName('')
+    setRenterPhone('')
+    setRenterNid('')
+    setRenterPhotoUrl('')
+    setPartnerName('')
+    setPartnerPhone('')
+    setPartnerNid('')
+    setPermanentAddress('')
+    setNidFrontUrl('')
+    setNidBackUrl('')
+    setRenterRent(room.monthlyRent ? String(room.monthlyRent) : '')
+    setRenterMoveInDate(new Date().toISOString().slice(0, 10))
 
     // Pre-populate electricity reading
     const prev = room.reading ? room.reading.previousReading : room.baselinePreviousReading
@@ -195,15 +267,166 @@ export function DashboardPage() {
       setPayAmount('')
     }
 
-    // Default tab based on needs
-    if (!room.reading) {
+    if (defaultTab) {
+      setDrawerTab(defaultTab)
+    } else if (room.status === 'vacant') {
+      setDrawerTab('renter')
+    } else if (!room.reading) {
       setDrawerTab('electricity')
     } else if (!room.bill) {
       setDrawerTab('bill')
     } else if (room.bill.remainingDue > 0) {
       setDrawerTab('payment')
     } else {
-      setDrawerTab('bill')
+      setDrawerTab('renter')
+    }
+  }
+
+  // Upload an image file to Vercel Blob via /api/upload
+  const handleUploadImage = async (file: File): Promise<string> => {
+    const formData = new FormData()
+    formData.append('file', file)
+    const res = await fetch('/api/upload', {
+      method: 'POST',
+      body: formData,
+    })
+    const json = await res.json()
+    if (!res.ok) {
+      throw new Error(json.error || 'Failed to upload image.')
+    }
+    return json.url as string
+  }
+
+  // Upload Photo handler
+  const onPhotoSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    try {
+      setUploadingPhoto(true)
+      setRenterMessage(null)
+      const url = await handleUploadImage(file)
+      setRenterPhotoUrl(url)
+    } catch (err) {
+      setRenterMessage({ text: (err as Error).message || 'Photo upload failed', isError: true })
+    } finally {
+      setUploadingPhoto(false)
+    }
+  }
+
+  // Upload NID Front / Back
+  const onDocSelected = async (e: React.ChangeEvent<HTMLInputElement>, type: 'front' | 'back') => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    try {
+      setUploadingDoc(type)
+      setRenterMessage(null)
+      const url = await handleUploadImage(file)
+      if (type === 'front') setNidFrontUrl(url)
+      if (type === 'back') setNidBackUrl(url)
+    } catch (err) {
+      setRenterMessage({ text: (err as Error).message || 'Document upload failed', isError: true })
+    } finally {
+      setUploadingDoc(null)
+    }
+  }
+
+  // Add / Assign Renter
+  const handleAddRenter = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!activeRoom) return
+
+    if (!renterName.trim()) {
+      setRenterMessage({ text: "Renter's full name is required.", isError: true })
+      return
+    }
+    if (!renterPhone.trim()) {
+      setRenterMessage({ text: "Renter's mobile number is required.", isError: true })
+      return
+    }
+    if (!renterNid.trim()) {
+      setRenterMessage({ text: "Renter's National ID (NID) is mandatory.", isError: true })
+      return
+    }
+    if (!renterPhotoUrl.trim()) {
+      setRenterMessage({ text: "Renter's photo is mandatory. Please upload an image.", isError: true })
+      return
+    }
+    if (!renterRent || Number(renterRent) <= 0) {
+      setRenterMessage({ text: 'Please specify monthly rent for this room.', isError: true })
+      return
+    }
+
+    try {
+      setSavingRenter(true)
+      setRenterMessage(null)
+
+      const res = await fetch('/api/residents', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fullName: renterName.trim(),
+          phone: renterPhone.trim(),
+          nidNumber: renterNid.trim(),
+          photoUrl: renterPhotoUrl,
+          partnerName: partnerName.trim(),
+          partnerPhone: partnerPhone.trim(),
+          partnerNid: partnerNid.trim(),
+          permanentAddress: permanentAddress.trim(),
+          nidFrontUrl,
+          nidBackUrl,
+          roomId: activeRoom._id,
+          monthlyRent: Number(renterRent),
+          moveInDate: renterMoveInDate,
+          wifiCharge: 0,
+        }),
+      })
+
+      const result = await res.json()
+      if (!res.ok) {
+        setRenterMessage({ text: result.error || 'Failed to add renter.', isError: true })
+      } else {
+        setRenterMessage({ text: `Renter ${renterName} assigned to Room ${formatRoomNumber(activeRoom.roomNumber)}!`, isError: false })
+        await loadDashboard(selectedMonth)
+      }
+    } catch {
+      setRenterMessage({ text: 'Error adding resident.', isError: true })
+    } finally {
+      setSavingRenter(false)
+    }
+  }
+
+  // Vacate current renter
+  const handleVacateRenter = async () => {
+    if (!activeRoom || !activeRoom.resident) return
+    const confirmed = window.confirm(
+      `Are you sure you want to vacate ${activeRoom.resident.fullName} from Room ${formatRoomNumber(activeRoom.roomNumber)}?\n\nTheir records, past bills, and documents will be preserved in room history permanently.`,
+    )
+    if (!confirmed) return
+
+    try {
+      setVacatingRenter(true)
+      setRenterMessage(null)
+
+      const res = await fetch(`/api/residents/${activeRoom.resident._id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'vacate' }),
+      })
+
+      const result = await res.json()
+      if (!res.ok) {
+        setRenterMessage({ text: result.error || 'Failed to vacate renter.', isError: true })
+      } else {
+        setRenterMessage({
+          text: `Renter vacated successfully. Room ${formatRoomNumber(activeRoom.roomNumber)} is now vacant.`,
+          isError: false,
+        })
+        await loadDashboard(selectedMonth)
+      }
+    } catch {
+      setRenterMessage({ text: 'Error vacating renter.', isError: true })
+    } finally {
+      setVacatingRenter(false)
     }
   }
 
@@ -397,7 +620,7 @@ export function DashboardPage() {
             26 Rooms Workspace
           </h1>
           <p className="mt-1 text-xs text-slate-500 sm:text-sm">
-            Click any room card to directly update meter readings, WiFi charges, bills, and payments.
+            Click any room card to directly update meter readings, WiFi charges, bills, and renter profiles.
           </p>
         </div>
 
@@ -553,10 +776,19 @@ export function DashboardPage() {
               {/* Card Header: Room Number + Floor + Status */}
               <div>
                 <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="flex size-9 items-center justify-center rounded-2xl bg-slate-900 text-white font-bold text-xs shadow-xs">
-                      {formatRoomNumber(room.roomNumber)}
-                    </div>
+                  <div className="flex items-center gap-2.5">
+                    {/* Renter Photo / Avatar Thumbnail */}
+                    {isOccupied && room.resident?.photoUrl ? (
+                      <img
+                        src={room.resident.photoUrl}
+                        alt={room.resident.fullName}
+                        className="size-10 rounded-2xl object-cover border border-slate-200 shadow-xs"
+                      />
+                    ) : (
+                      <div className="flex size-10 items-center justify-center rounded-2xl bg-slate-900 text-white font-bold text-xs shadow-xs">
+                        {formatRoomNumber(room.roomNumber)}
+                      </div>
+                    )}
                     <div>
                       <h2 className="text-sm font-bold text-slate-900 tracking-tight">
                         Room {formatRoomNumber(room.roomNumber)}
@@ -582,13 +814,25 @@ export function DashboardPage() {
                   {isOccupied && room.resident ? (
                     <div>
                       <p className="text-xs font-semibold text-slate-800 truncate">{room.resident.fullName}</p>
-                      <p className="text-[11px] text-slate-400 font-mono mt-0.5 flex items-center gap-1">
-                        <Phone className="size-3 text-slate-300" />
-                        {room.resident.phone || 'No phone'}
-                      </p>
+                      <div className="flex items-center justify-between text-[11px] text-slate-400 font-mono mt-0.5">
+                        <span className="flex items-center gap-1">
+                          <Phone className="size-3 text-slate-300" />
+                          {room.resident.phone || 'No phone'}
+                        </span>
+                        {room.resident.nidNumber ? (
+                          <span className="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
+                            NID: {room.resident.nidNumber}
+                          </span>
+                        ) : null}
+                      </div>
                     </div>
                   ) : (
-                    <p className="text-xs text-slate-400 italic">No resident assigned</p>
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs text-slate-400 italic">No resident</p>
+                      <span className="text-[11px] font-medium text-indigo-600 group-hover:underline">
+                        + Add Renter
+                      </span>
+                    </div>
                   )}
                 </div>
 
@@ -700,21 +944,34 @@ export function DashboardPage() {
           onClick={() => setActiveRoom(null)}
         >
           <div
-            className="flex h-full w-full max-w-lg flex-col bg-white shadow-2xl animate-in slide-in-from-right duration-200 sm:rounded-l-3xl overflow-hidden"
+            className="flex h-full w-full max-w-xl flex-col bg-white shadow-2xl animate-in slide-in-from-right duration-200 sm:rounded-l-3xl overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Drawer Header */}
             <div className="flex items-start justify-between border-b border-slate-200/80 bg-[#fbfbfc] p-6">
               <div>
-                <div className="flex items-center gap-2">
-                  <div className="flex size-8 items-center justify-center rounded-xl bg-slate-900 text-xs font-bold text-white">
-                    {formatRoomNumber(activeRoom.roomNumber)}
+                <div className="flex items-center gap-2.5">
+                  {activeRoom.resident?.photoUrl ? (
+                    <img
+                      src={activeRoom.resident.photoUrl}
+                      alt={activeRoom.resident.fullName}
+                      className="size-10 rounded-2xl object-cover border border-slate-200 shadow-xs"
+                    />
+                  ) : (
+                    <div className="flex size-10 items-center justify-center rounded-2xl bg-slate-900 text-xs font-bold text-white">
+                      {formatRoomNumber(activeRoom.roomNumber)}
+                    </div>
+                  )}
+                  <div>
+                    <h3 className="text-xl font-bold text-slate-900">
+                      Room {formatRoomNumber(activeRoom.roomNumber)}
+                    </h3>
+                    <p className="text-xs text-slate-500">
+                      Floor {activeRoom.floor} · {activeRoom.resident ? activeRoom.resident.fullName : 'Vacant Room'}
+                    </p>
                   </div>
-                  <h3 className="text-xl font-bold text-slate-900">
-                    Room {formatRoomNumber(activeRoom.roomNumber)}
-                  </h3>
                   <span
-                    className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                    className={`ml-2 rounded-full px-2.5 py-0.5 text-xs font-semibold ${
                       activeRoom.status === 'occupied'
                         ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                         : 'bg-slate-100 text-slate-600'
@@ -723,10 +980,6 @@ export function DashboardPage() {
                     {activeRoom.status === 'occupied' ? 'Occupied' : 'Vacant'}
                   </span>
                 </div>
-                <p className="mt-1 text-xs text-slate-500">
-                  Floor {activeRoom.floor} · {activeRoom.resident ? activeRoom.resident.fullName : 'No resident'}
-                  {activeRoom.resident?.phone ? ` (${activeRoom.resident.phone})` : ''}
-                </p>
               </div>
 
               <button
@@ -740,6 +993,18 @@ export function DashboardPage() {
 
             {/* Quick Action Navigation Tabs (Claude Pill Style) */}
             <div className="flex items-center gap-1 border-b border-slate-100 bg-white px-6 py-2.5 overflow-x-auto">
+              <button
+                type="button"
+                onClick={() => setDrawerTab('renter')}
+                className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
+                  drawerTab === 'renter'
+                    ? 'bg-slate-900 text-white shadow-xs'
+                    : 'text-slate-600 hover:bg-slate-100'
+                }`}
+              >
+                <User className="size-3.5" /> Renter Profile
+              </button>
+
               <button
                 type="button"
                 onClick={() => setDrawerTab('electricity')}
@@ -769,11 +1034,11 @@ export function DashboardPage() {
                 onClick={() => setDrawerTab('bill')}
                 className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
                   drawerTab === 'bill'
-                    ? 'bg-slate-900 text-white shadow-xs'
+                    ? 'bg-indigo-600 text-white shadow-xs'
                     : 'text-slate-600 hover:bg-slate-100'
                 }`}
               >
-                <CircleDollarSign className="size-3.5" /> Bill Breakdown
+                <CircleDollarSign className="size-3.5" /> Bill
               </button>
 
               <button
@@ -785,12 +1050,470 @@ export function DashboardPage() {
                     : 'text-slate-600 hover:bg-slate-100'
                 }`}
               >
-                <CreditCard className="size-3.5" /> Collect Payment
+                <CreditCard className="size-3.5" /> Pay
               </button>
             </div>
 
             {/* Drawer Body */}
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              {/* TAB 0: RENTER PROFILE & DOCUMENTS */}
+              {drawerTab === 'renter' && (
+                <div className="space-y-6">
+                  {/* If Room is Occupied: Show Current Renter Profile & Documents */}
+                  {activeRoom.status === 'occupied' && activeRoom.resident ? (
+                    <div className="space-y-5">
+                      <div className="rounded-3xl border border-slate-200/80 bg-slate-50/50 p-5">
+                        <div className="flex items-start gap-4">
+                          {activeRoom.resident.photoUrl ? (
+                            <img
+                              src={activeRoom.resident.photoUrl}
+                              alt={activeRoom.resident.fullName}
+                              className="size-20 rounded-2xl object-cover border-2 border-white shadow-md"
+                            />
+                          ) : (
+                            <div className="flex size-20 items-center justify-center rounded-2xl bg-slate-900 text-white font-bold text-xl">
+                              {activeRoom.resident.fullName.charAt(0)}
+                            </div>
+                          )}
+                          <div className="flex-1">
+                            <h4 className="text-base font-bold text-slate-900">
+                              {activeRoom.resident.fullName}
+                            </h4>
+                            <p className="text-xs text-slate-500 font-mono mt-0.5 flex items-center gap-1.5">
+                              <Phone className="size-3.5 text-slate-400" />
+                              {activeRoom.resident.phone}
+                            </p>
+                            <div className="mt-2 flex flex-wrap gap-1.5">
+                              <span className="rounded-md bg-white border border-slate-200 px-2 py-0.5 text-[11px] font-semibold text-slate-700">
+                                NID: {activeRoom.resident.nidNumber || 'Not specified'}
+                              </span>
+                              <span className="rounded-md bg-white border border-slate-200 px-2 py-0.5 text-[11px] font-medium text-slate-500">
+                                In: {activeRoom.resident.moveInDate || 'Active'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Additional Renter Details */}
+                        <div className="mt-4 pt-4 border-t border-slate-200/60 grid grid-cols-2 gap-3 text-xs">
+                          <div>
+                            <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">
+                              Partner Name
+                            </span>
+                            <span className="font-semibold text-slate-800">
+                              {activeRoom.resident.partnerName || 'None'}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">
+                              Partner Mobile
+                            </span>
+                            <span className="font-semibold text-slate-800 font-mono">
+                              {activeRoom.resident.partnerPhone || 'None'}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">
+                              Partner NID
+                            </span>
+                            <span className="font-semibold text-slate-800 font-mono">
+                              {activeRoom.resident.partnerNid || 'None'}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">
+                              Permanent Address
+                            </span>
+                            <span className="font-semibold text-slate-800 truncate block">
+                              {activeRoom.resident.permanentAddress || 'None provided'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Document Previews (NID Front & Back) */}
+                        <div className="mt-4 pt-4 border-t border-slate-200/60">
+                          <span className="text-slate-500 block text-xs font-bold mb-2">
+                            Uploaded Documents (Vercel Blob)
+                          </span>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <p className="text-[10px] text-slate-400 mb-1">NID Front</p>
+                              {activeRoom.resident.nidFrontUrl ? (
+                                <a
+                                  href={activeRoom.resident.nidFrontUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="group relative block overflow-hidden rounded-xl border border-slate-200 bg-white"
+                                >
+                                  <img
+                                    src={activeRoom.resident.nidFrontUrl}
+                                    alt="NID Front"
+                                    className="h-24 w-full object-cover group-hover:scale-105 transition"
+                                  />
+                                </a>
+                              ) : (
+                                <div className="flex h-20 items-center justify-center rounded-xl border border-dashed border-slate-200 bg-white text-xs text-slate-400">
+                                  No NID Front
+                                </div>
+                              )}
+                            </div>
+                            <div>
+                              <p className="text-[10px] text-slate-400 mb-1">NID Back</p>
+                              {activeRoom.resident.nidBackUrl ? (
+                                <a
+                                  href={activeRoom.resident.nidBackUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="group relative block overflow-hidden rounded-xl border border-slate-200 bg-white"
+                                >
+                                  <img
+                                    src={activeRoom.resident.nidBackUrl}
+                                    alt="NID Back"
+                                    className="h-24 w-full object-cover group-hover:scale-105 transition"
+                                  />
+                                </a>
+                              ) : (
+                                <div className="flex h-20 items-center justify-center rounded-xl border border-dashed border-slate-200 bg-white text-xs text-slate-400">
+                                  No NID Back
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Vacate Renter Action */}
+                        <div className="mt-5 pt-4 border-t border-slate-200/60">
+                          <button
+                            type="button"
+                            disabled={vacatingRenter}
+                            onClick={handleVacateRenter}
+                            className="w-full flex items-center justify-center gap-2 rounded-2xl border border-rose-200 bg-rose-50/80 py-2.5 text-xs font-semibold text-rose-700 hover:bg-rose-100 transition disabled:opacity-50"
+                          >
+                            <UserMinus className="size-4" />
+                            {vacatingRenter ? 'Vacating Renter...' : 'Vacate Current Renter (Move Out)'}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    /* If Room is Vacant: Show "Add New Renter" Form */
+                    <form onSubmit={handleAddRenter} className="space-y-4">
+                      <div className="rounded-2xl border border-indigo-200/70 bg-indigo-50/50 p-4">
+                        <div className="flex items-center gap-2 text-xs font-bold text-indigo-900">
+                          <UserPlus className="size-4 text-indigo-600" />
+                          <span>Assign New Renter to Room {formatRoomNumber(activeRoom.roomNumber)}</span>
+                        </div>
+                        <p className="mt-1 text-xs text-indigo-700/80 leading-relaxed">
+                          Fill in the renter details below. Photo and NID will be uploaded directly to Vercel Blob.
+                        </p>
+                      </div>
+
+                      {/* Photo Upload (Mandatory) */}
+                      <div>
+                        <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center gap-1.5">
+                          <span>Renter Photograph *</span>
+                          <span className="text-[10px] font-normal text-rose-600">(Mandatory)</span>
+                        </label>
+                        <input
+                          ref={photoInputRef}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={onPhotoSelected}
+                        />
+
+                        {renterPhotoUrl ? (
+                          <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/60 p-3">
+                            <img
+                              src={renterPhotoUrl}
+                              alt="Renter preview"
+                              className="size-14 rounded-xl object-cover border border-emerald-300"
+                            />
+                            <div className="flex-1 text-xs">
+                              <p className="font-bold text-emerald-900 flex items-center gap-1">
+                                <CheckCircle2 className="size-3.5 text-emerald-600" /> Photo Uploaded
+                              </p>
+                              <p className="text-[11px] text-slate-500 mt-0.5">Stored on Vercel Blob</p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => photoInputRef.current?.click()}
+                              className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                            >
+                              Change
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            disabled={uploadingPhoto}
+                            onClick={() => photoInputRef.current?.click()}
+                            className="w-full flex flex-col items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50/60 p-4 hover:border-slate-400 hover:bg-slate-100/50 transition cursor-pointer"
+                          >
+                            <Camera className="size-6 text-slate-400" />
+                            <span className="text-xs font-bold text-slate-700">
+                              {uploadingPhoto ? 'Uploading to Vercel Blob...' : 'Click to Upload Renter Photo'}
+                            </span>
+                            <span className="text-[10px] text-slate-400">JPG, PNG, WEBP up to 10MB</span>
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Mandatory Fields */}
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs font-bold text-slate-800 mb-1">
+                            Renter Full Name *
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            value={renterName}
+                            onChange={(e) => setRenterName(e.target.value)}
+                            placeholder="e.g. Kazi Nazrul Islam"
+                            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-900 focus:border-slate-950 focus:outline-none"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-bold text-slate-800 mb-1">
+                            Mobile Number *
+                          </label>
+                          <input
+                            type="tel"
+                            required
+                            value={renterPhone}
+                            onChange={(e) => setRenterPhone(e.target.value)}
+                            placeholder="017XXXXXXXX"
+                            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-900 font-mono focus:border-slate-950 focus:outline-none"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs font-bold text-slate-800 mb-1">
+                            National ID (NID) *
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            value={renterNid}
+                            onChange={(e) => setRenterNid(e.target.value)}
+                            placeholder="NID number"
+                            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-900 font-mono focus:border-slate-950 focus:outline-none"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-bold text-slate-800 mb-1">
+                            Monthly Rent (BDT) *
+                          </label>
+                          <input
+                            type="number"
+                            required
+                            min="0"
+                            value={renterRent}
+                            onChange={(e) => setRenterRent(e.target.value)}
+                            placeholder="e.g. 12000"
+                            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-900 focus:border-slate-950 focus:outline-none"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Optional Partner & Address Fields */}
+                      <div className="pt-2 border-t border-slate-100">
+                        <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2.5">
+                          Optional Information (Partner & Address)
+                        </p>
+
+                        <div className="grid grid-cols-3 gap-2.5">
+                          <div>
+                            <label className="block text-[11px] font-medium text-slate-600 mb-1">
+                              Partner Name
+                            </label>
+                            <input
+                              type="text"
+                              value={partnerName}
+                              onChange={(e) => setPartnerName(e.target.value)}
+                              placeholder="Spouse / Partner"
+                              className="w-full rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-900 focus:border-slate-950 focus:outline-none"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-medium text-slate-600 mb-1">
+                              Partner Phone
+                            </label>
+                            <input
+                              type="tel"
+                              value={partnerPhone}
+                              onChange={(e) => setPartnerPhone(e.target.value)}
+                              placeholder="Mobile"
+                              className="w-full rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-900 font-mono focus:border-slate-950 focus:outline-none"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-medium text-slate-600 mb-1">
+                              Partner NID
+                            </label>
+                            <input
+                              type="text"
+                              value={partnerNid}
+                              onChange={(e) => setPartnerNid(e.target.value)}
+                              placeholder="Partner NID"
+                              className="w-full rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-900 font-mono focus:border-slate-950 focus:outline-none"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="mt-3">
+                          <label className="block text-[11px] font-medium text-slate-600 mb-1">
+                            Renter Permanent Address
+                          </label>
+                          <input
+                            type="text"
+                            value={permanentAddress}
+                            onChange={(e) => setPermanentAddress(e.target.value)}
+                            placeholder="Village, Upazila, District"
+                            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-900 focus:border-slate-950 focus:outline-none"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Optional Document Uploads (NID Front / Back) */}
+                      <div className="pt-2 border-t border-slate-100">
+                        <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">
+                          Optional Document Uploads (Vercel Blob)
+                        </p>
+                        <input
+                          ref={nidFrontInputRef}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => onDocSelected(e, 'front')}
+                        />
+                        <input
+                          ref={nidBackInputRef}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => onDocSelected(e, 'back')}
+                        />
+
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            {nidFrontUrl ? (
+                              <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 p-2 text-xs">
+                                <img src={nidFrontUrl} alt="NID Front" className="size-10 rounded-lg object-cover" />
+                                <span className="font-medium text-slate-700 truncate">NID Front ✓</span>
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                disabled={uploadingDoc === 'front'}
+                                onClick={() => nidFrontInputRef.current?.click()}
+                                className="w-full flex items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-200 bg-slate-50/60 py-2.5 text-xs font-medium text-slate-600 hover:bg-slate-100"
+                              >
+                                <Upload className="size-3.5" />
+                                {uploadingDoc === 'front' ? 'Uploading...' : 'Upload NID Front'}
+                              </button>
+                            )}
+                          </div>
+
+                          <div>
+                            {nidBackUrl ? (
+                              <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 p-2 text-xs">
+                                <img src={nidBackUrl} alt="NID Back" className="size-10 rounded-lg object-cover" />
+                                <span className="font-medium text-slate-700 truncate">NID Back ✓</span>
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                disabled={uploadingDoc === 'back'}
+                                onClick={() => nidBackInputRef.current?.click()}
+                                className="w-full flex items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-200 bg-slate-50/60 py-2.5 text-xs font-medium text-slate-600 hover:bg-slate-100"
+                              >
+                                <Upload className="size-3.5" />
+                                {uploadingDoc === 'back' ? 'Uploading...' : 'Upload NID Back'}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {renterMessage && (
+                        <div
+                          className={`rounded-xl p-3 text-xs font-medium ${
+                            renterMessage.isError
+                              ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                              : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                          }`}
+                        >
+                          {renterMessage.text}
+                        </div>
+                      )}
+
+                      <button
+                        type="submit"
+                        disabled={savingRenter}
+                        className="w-full rounded-full bg-slate-950 py-3 text-sm font-semibold text-white shadow-xs hover:bg-slate-800 transition disabled:opacity-50"
+                      >
+                        {savingRenter ? 'Adding Renter...' : 'Add Renter & Assign to Room'}
+                      </button>
+                    </form>
+                  )}
+
+                  {/* Room Past Renters History */}
+                  <div className="pt-4 border-t border-slate-100">
+                    <div className="flex items-center gap-2 mb-3">
+                      <History className="size-4 text-slate-400" />
+                      <h5 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                        Past Renters History ({activeRoom.pastResidents?.length || 0})
+                      </h5>
+                    </div>
+
+                    {activeRoom.pastResidents && activeRoom.pastResidents.length > 0 ? (
+                      <div className="space-y-2.5">
+                        {activeRoom.pastResidents.map((pr) => (
+                          <div
+                            key={pr._id}
+                            className="flex items-center justify-between rounded-2xl border border-slate-200/70 bg-white p-3 text-xs"
+                          >
+                            <div className="flex items-center gap-3">
+                              {pr.photoUrl ? (
+                                <img
+                                  src={pr.photoUrl}
+                                  alt={pr.fullName}
+                                  className="size-10 rounded-xl object-cover border border-slate-200"
+                                />
+                              ) : (
+                                <div className="flex size-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600 font-bold">
+                                  {pr.fullName.charAt(0)}
+                                </div>
+                              )}
+                              <div>
+                                <p className="font-bold text-slate-800">{pr.fullName}</p>
+                                <p className="text-[11px] text-slate-400 font-mono">{pr.phone}</p>
+                              </div>
+                            </div>
+                            <div className="text-right text-[11px] text-slate-500">
+                              <span className="rounded bg-slate-100 px-1.5 py-0.5">Vacated</span>
+                              <p className="mt-1 text-[10px] text-slate-400 font-mono">
+                                {pr.moveInDate} → {pr.moveOutDate || 'Vacated'}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-slate-400 italic">No previous renters on record for this room.</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* TAB 1: ELECTRICITY */}
               {drawerTab === 'electricity' && (
                 <form onSubmit={handleSaveReading} className="space-y-5">
