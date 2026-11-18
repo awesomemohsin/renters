@@ -161,6 +161,8 @@ export async function GET(request: Request) {
               nidFrontUrl: resident.nidFront?.url || '',
               nidBackUrl: resident.nidBack?.url || '',
               moveInDate: resident.moveInDate || '',
+              advanceBalance: Number(resident.advanceBalance ?? 0),
+              roomHistory: resident.roomHistory || [],
               status: resident.status,
             }
           : null,

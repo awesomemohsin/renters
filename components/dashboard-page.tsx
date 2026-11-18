@@ -77,6 +77,17 @@ type RoomSummary = {
     nidFrontUrl: string
     nidBackUrl: string
     moveInDate: string
+    advanceBalance?: number
+    monthlyRent?: number
+    roomHistory?: Array<{
+      roomId: string
+      roomNumber: number
+      floor: number
+      monthlyRent: number
+      fromDate: string
+      toDate?: string | null
+      reason?: string
+    }>
     status: string
   } | null
   pastResidents: PastResident[]
@@ -201,12 +212,23 @@ export function DashboardPage() {
   const [billMessage, setBillMessage] = useState<{ text: string; isError: boolean } | null>(null)
 
   // Payment form state
+  const [payMode, setPayMode] = useState<'bill' | 'advance'>('bill')
+  const [applyingAdvance, setApplyingAdvance] = useState(false)
   const [payAmount, setPayAmount] = useState<string>('')
   const [payMethod, setPayMethod] = useState<'cash' | 'bkash' | 'nagad' | 'bank_transfer'>('cash')
   const [payDate, setPayDate] = useState(new Date().toISOString().slice(0, 10))
   const [payRef, setPayRef] = useState('')
   const [savingPayment, setSavingPayment] = useState(false)
   const [paymentMessage, setPaymentMessage] = useState<{ text: string; isError: boolean } | null>(null)
+
+  // Room shift state
+  const [showShiftModal, setShowShiftModal] = useState(false)
+  const [shiftTargetRoomId, setShiftTargetRoomId] = useState('')
+  const [shiftDate, setShiftDate] = useState(new Date().toISOString().slice(0, 10))
+  const [shiftRent, setShiftRent] = useState('')
+  const [shiftNotes, setShiftNotes] = useState('')
+  const [shiftingResident, setShiftingResident] = useState(false)
+  const [shiftMessage, setShiftMessage] = useState<{ text: string; isError: boolean } | null>(null)
 
   // Fetch Dashboard Data
   const loadDashboard = async (month: string) => {
@@ -263,9 +285,16 @@ export function DashboardPage() {
     // Pre-populate Payment
     if (room.bill && room.bill.remainingDue > 0) {
       setPayAmount(String(room.bill.remainingDue))
+      setPayMode('bill')
     } else {
       setPayAmount('')
+      setPayMode(room.resident ? 'advance' : 'bill')
     }
+    setShowShiftModal(false)
+    setShiftTargetRoomId('')
+    setShiftRent(room.resident?.monthlyRent ? String(room.resident.monthlyRent) : '')
+    setShiftNotes('')
+    setShiftMessage(null)
 
     if (defaultTab) {
       setDrawerTab(defaultTab)
@@ -536,10 +565,10 @@ export function DashboardPage() {
     }
   }
 
-  // Record payment
+  // Record payment (Regular or Advance)
   const handleRecordPayment = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!activeRoom || !activeRoom.bill) return
+    if (!activeRoom || !activeRoom.resident) return
     const amount = Number(payAmount)
     if (Number.isNaN(amount) || amount <= 0) {
       setPaymentMessage({ text: 'Please enter a valid payment amount.', isError: true })
@@ -549,22 +578,40 @@ export function DashboardPage() {
     try {
       setSavingPayment(true)
       setPaymentMessage(null)
+
+      const isAdv = payMode === 'advance' || !activeRoom.bill
+      const payload = isAdv
+        ? {
+            action: 'record_advance',
+            residentId: activeRoom.resident._id,
+            roomId: activeRoom._id,
+            amount,
+            paymentMethod: payMethod,
+            paymentDate: payDate,
+            notes: payRef || 'Advance bill payment deposit',
+          }
+        : {
+            billId: activeRoom.bill?._id,
+            amount,
+            paymentMethod: payMethod,
+            paymentDate: payDate,
+            notes: payRef,
+            recordExcessAsAdvance: true,
+          }
+
       const res = await fetch('/api/monthly-bills/payments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          billId: activeRoom.bill._id,
-          amount,
-          paymentMethod: payMethod,
-          paymentDate: payDate,
-          notes: payRef,
-        }),
+        body: JSON.stringify(payload),
       })
       const result = await res.json()
       if (!res.ok) {
         setPaymentMessage({ text: result.error || 'Failed to record payment.', isError: true })
       } else {
-        setPaymentMessage({ text: `Payment of ৳${amount.toLocaleString()} recorded successfully!`, isError: false })
+        const msg = isAdv
+          ? `Advance payment of ৳${amount.toLocaleString()} credited successfully!`
+          : `Payment of ৳${amount.toLocaleString()} recorded successfully!`
+        setPaymentMessage({ text: msg, isError: false })
         setPayAmount('')
         await loadDashboard(selectedMonth)
       }
@@ -572,6 +619,74 @@ export function DashboardPage() {
       setPaymentMessage({ text: 'Error recording payment.', isError: true })
     } finally {
       setSavingPayment(false)
+    }
+  }
+
+  // Apply advance credit to current bill
+  const handleApplyAdvance = async () => {
+    if (!activeRoom || !activeRoom.bill || !activeRoom.resident?.advanceBalance) return
+    const maxApply = Math.min(activeRoom.resident.advanceBalance, activeRoom.bill.remainingDue)
+    if (maxApply <= 0) return
+
+    try {
+      setApplyingAdvance(true)
+      setPaymentMessage(null)
+      const res = await fetch(`/api/monthly-bills/${activeRoom.bill._id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'apply_advance',
+          notes: 'Applied from renter advance balance',
+        }),
+      })
+      const result = await res.json()
+      if (!res.ok) {
+        setPaymentMessage({ text: result.error || 'Failed to apply advance.', isError: true })
+      } else {
+        setPaymentMessage({ text: `Successfully applied advance credit to bill!`, isError: false })
+        await loadDashboard(selectedMonth)
+      }
+    } catch {
+      setPaymentMessage({ text: 'Error applying advance credit.', isError: true })
+    } finally {
+      setApplyingAdvance(false)
+    }
+  }
+
+  // Shift / Transfer room
+  const handleShiftRoom = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!activeRoom || !activeRoom.resident) return
+    if (!shiftTargetRoomId) {
+      setShiftMessage({ text: 'Please select a vacant destination room.', isError: true })
+      return
+    }
+
+    try {
+      setShiftingResident(true)
+      setShiftMessage(null)
+      const res = await fetch(`/api/residents/${activeRoom.resident._id}/shift-room`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          targetRoomId: shiftTargetRoomId,
+          shiftDate,
+          newMonthlyRent: shiftRent ? Number(shiftRent) : undefined,
+          notes: shiftNotes,
+        }),
+      })
+      const result = await res.json()
+      if (!res.ok) {
+        setShiftMessage({ text: result.error || 'Failed to shift room.', isError: true })
+      } else {
+        setShiftMessage({ text: result.message || 'Room shifted successfully!', isError: false })
+        setShowShiftModal(false)
+        await loadDashboard(selectedMonth)
+      }
+    } catch {
+      setShiftMessage({ text: 'Error executing room shift.', isError: true })
+    } finally {
+      setShiftingResident(false)
     }
   }
 
@@ -797,16 +912,23 @@ export function DashboardPage() {
                     </div>
                   </div>
 
-                  <span
-                    className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
-                      isOccupied
-                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/60'
-                        : 'bg-slate-100 text-slate-600 border border-slate-200'
-                    }`}
-                  >
-                    <span className={`size-1.5 rounded-full ${isOccupied ? 'bg-emerald-500' : 'bg-slate-400'}`} />
-                    {isOccupied ? 'Occupied' : 'Vacant'}
-                  </span>
+                  <div className="flex flex-col items-end gap-1">
+                    <span
+                      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
+                        isOccupied
+                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/60'
+                          : 'bg-slate-100 text-slate-600 border border-slate-200'
+                      }`}
+                    >
+                      <span className={`size-1.5 rounded-full ${isOccupied ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+                      {isOccupied ? 'Occupied' : 'Vacant'}
+                    </span>
+                    {room.resident?.advanceBalance && room.resident.advanceBalance > 0 ? (
+                      <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                        Adv: ৳{room.resident.advanceBalance.toLocaleString()}
+                      </span>
+                    ) : null}
+                  </div>
                 </div>
 
                 {/* Resident Details */}
@@ -1181,15 +1303,171 @@ export function DashboardPage() {
                           </div>
                         </div>
 
-                        {/* Vacate Renter Action */}
-                        <div className="mt-5 pt-4 border-t border-slate-200/60">
+                        {/* Room Tenancy & Shift History if any */}
+                        {Array.isArray(activeRoom.resident.roomHistory) &&
+                          activeRoom.resident.roomHistory.length > 0 && (
+                            <div className="mt-4 rounded-2xl border border-slate-200/70 bg-slate-50/60 p-3.5">
+                              <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-2">
+                                Room Shift History
+                              </span>
+                              <div className="space-y-1.5 text-xs text-slate-600">
+                                {activeRoom.resident.roomHistory.map((h, i) => (
+                                  <div
+                                    key={i}
+                                    className="flex items-center justify-between py-1 border-b border-slate-200/50 last:border-0"
+                                  >
+                                    <span className="font-semibold text-slate-800">
+                                      Room {formatRoomNumber(h.roomNumber)} (Floor {h.floor})
+                                    </span>
+                                    <span className="font-mono text-[11px] text-slate-400">
+                                      {h.fromDate} → {h.toDate || 'Present'}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                        {/* Room Shift Form Modal / Section */}
+                        {showShiftModal && (
+                          <div className="mt-4 rounded-2xl border border-indigo-200 bg-indigo-50/60 p-4 space-y-3">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-900">
+                                <RefreshCw className="size-3.5 text-indigo-600" />
+                                <span>Shift Renter to Another Room</span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => setShowShiftModal(false)}
+                                className="text-xs text-slate-400 hover:text-slate-600"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+
+                            <p className="text-[11px] text-indigo-700/80 leading-relaxed">
+                              Move {activeRoom.resident.fullName} to a vacant room. All unpaid dues (including past electricity bills arriving 1 month late) automatically carry forward to the new room.
+                            </p>
+
+                            <form onSubmit={handleShiftRoom} className="space-y-3 pt-1">
+                              <div>
+                                <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                                  Destination Room *
+                                </label>
+                                <select
+                                  required
+                                  value={shiftTargetRoomId}
+                                  onChange={(e) => {
+                                    setShiftTargetRoomId(e.target.value)
+                                    const target = data?.rooms.find((r) => r._id === e.target.value)
+                                    if (target?.monthlyRent) {
+                                      setShiftRent(String(target.monthlyRent))
+                                    }
+                                  }}
+                                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-800 focus:border-slate-950 focus:outline-none"
+                                >
+                                  <option value="">-- Choose Vacant Room --</option>
+                                  {data?.rooms
+                                    .filter((r) => r.status === 'vacant' && r._id !== activeRoom._id)
+                                    .map((r) => (
+                                      <option key={r._id} value={r._id}>
+                                        Room {formatRoomNumber(r.roomNumber)} (Floor {r.floor}) — ৳
+                                        {r.monthlyRent ? r.monthlyRent.toLocaleString() : 'N/A'}/mo
+                                      </option>
+                                    ))}
+                                </select>
+                              </div>
+
+                              <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                                    Effective Shift Date *
+                                  </label>
+                                  <input
+                                    type="date"
+                                    required
+                                    value={shiftDate}
+                                    onChange={(e) => setShiftDate(e.target.value)}
+                                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-800 focus:border-slate-950 focus:outline-none"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                                    New Monthly Rent (৳)
+                                  </label>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    value={shiftRent}
+                                    onChange={(e) => setShiftRent(e.target.value)}
+                                    placeholder="Keep or override rent"
+                                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-800 focus:border-slate-950 focus:outline-none"
+                                  />
+                                </div>
+                              </div>
+
+                              <div>
+                                <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                                  Shift Reason / Note (optional)
+                                </label>
+                                <input
+                                  type="text"
+                                  value={shiftNotes}
+                                  onChange={(e) => setShiftNotes(e.target.value)}
+                                  placeholder="e.g. Shifted to larger room"
+                                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-800 focus:border-slate-950 focus:outline-none"
+                                />
+                              </div>
+
+                              {shiftMessage && (
+                                <div
+                                  className={`rounded-xl p-2.5 text-xs font-medium ${
+                                    shiftMessage.isError
+                                      ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                                      : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                  }`}
+                                >
+                                  {shiftMessage.text}
+                                </div>
+                              )}
+
+                              <button
+                                type="submit"
+                                disabled={shiftingResident || !shiftTargetRoomId}
+                                className="w-full rounded-xl bg-indigo-600 py-2.5 text-xs font-semibold text-white shadow-xs hover:bg-indigo-700 transition disabled:opacity-50"
+                              >
+                                {shiftingResident ? 'Shifting Renter...' : 'Confirm Room Shift & Transfer Dues'}
+                              </button>
+                            </form>
+                          </div>
+                        )}
+
+                        {/* Tenancy Actions: Shift Room & Vacate */}
+                        <div className="mt-5 pt-4 border-t border-slate-200/60 space-y-2.5">
+                          {!showShiftModal && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setShowShiftModal(true)
+                                setShiftMessage(null)
+                                setShiftRent(
+                                  String(activeRoom.resident?.monthlyRent || activeRoom.monthlyRent || ''),
+                                )
+                              }}
+                              className="w-full flex items-center justify-center gap-2 rounded-2xl border border-indigo-200 bg-indigo-50/80 py-2.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 transition shadow-xs"
+                            >
+                              <RefreshCw className="size-3.5" />
+                              <span>Shift / Transfer Room</span>
+                            </button>
+                          )}
+
                           <button
                             type="button"
                             disabled={vacatingRenter}
                             onClick={handleVacateRenter}
-                            className="w-full flex items-center justify-center gap-2 rounded-2xl border border-rose-200 bg-rose-50/80 py-2.5 text-xs font-semibold text-rose-700 hover:bg-rose-100 transition disabled:opacity-50"
+                            className="w-full flex items-center justify-center gap-2 rounded-2xl border border-rose-200 bg-rose-50/80 py-2 text-xs font-medium text-rose-700 hover:bg-rose-100 transition disabled:opacity-50"
                           >
-                            <UserMinus className="size-4" />
+                            <UserMinus className="size-3.5" />
                             {vacatingRenter ? 'Vacating Renter...' : 'Vacate Current Renter (Move Out)'}
                           </button>
                         </div>
@@ -1780,107 +2058,208 @@ export function DashboardPage() {
                 </div>
               )}
 
-              {/* TAB 4: COLLECT PAYMENT */}
+              {/* TAB 4: COLLECT PAYMENT & ADVANCE DEPOSIT */}
               {drawerTab === 'payment' && (
-                <form onSubmit={handleRecordPayment} className="space-y-5">
-                  <div className="rounded-2xl border border-emerald-200/70 bg-emerald-50/50 p-4">
-                    <div className="flex items-center gap-2 text-xs font-bold text-emerald-800">
-                      <CreditCard className="size-4 text-emerald-600" />
-                      <span>Collect Payment ({selectedMonth})</span>
-                    </div>
-                    <p className="mt-1 text-xs text-emerald-700/80 leading-relaxed">
-                      Outstanding balance:{' '}
-                      <strong className="text-emerald-900">
-                        ৳{activeRoom.bill?.remainingDue.toLocaleString() || '0'}
-                      </strong>
-                      . Recording payment updates resident financial balance in real time.
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Amount Received (BDT) *
-                    </label>
-                    <div className="relative">
-                      <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-sm font-bold text-slate-400">
-                        ৳
+                <div className="space-y-4">
+                  {/* Balance & Advance Overview */}
+                  <div className="rounded-2xl border border-emerald-200/70 bg-emerald-50/50 p-4 space-y-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-1.5 font-bold text-emerald-900">
+                        <CreditCard className="size-4 text-emerald-600" />
+                        <span>Payment & Advance Balance</span>
+                      </div>
+                      <span className="text-[11px] text-emerald-700 font-mono">
+                        {selectedMonth}
                       </span>
-                      <input
-                        type="number"
-                        min="1"
-                        step="1"
-                        required
-                        value={payAmount}
-                        onChange={(e) => setPayAmount(e.target.value)}
-                        placeholder="Enter amount"
-                        className="w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-8 pr-3 text-sm font-bold text-slate-900 focus:border-slate-950 focus:outline-none"
-                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 pt-2 border-t border-emerald-200/60">
+                      <div className="bg-white/80 rounded-xl p-2.5 border border-emerald-200/50">
+                        <span className="text-[10px] text-slate-500 uppercase tracking-wider block">Bill Remaining Due</span>
+                        <span className="text-sm font-bold text-rose-600">
+                          ৳{activeRoom.bill?.remainingDue.toLocaleString() || '0'}
+                        </span>
+                      </div>
+                      <div className="bg-white/80 rounded-xl p-2.5 border border-emerald-200/50">
+                        <span className="text-[10px] text-slate-500 uppercase tracking-wider block">Renter Advance Credit</span>
+                        <span className="text-sm font-bold text-emerald-700">
+                          ৳{(activeRoom.resident?.advanceBalance || 0).toLocaleString()}
+                        </span>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
-                        Payment Method
-                      </label>
-                      <select
-                        value={payMethod}
-                        onChange={(e) => setPayMethod(e.target.value as typeof payMethod)}
-                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-800 focus:border-slate-950 focus:outline-none"
+                  {/* Quick-Apply Advance Balance if Available */}
+                  {Boolean(
+                    activeRoom.resident?.advanceBalance &&
+                      activeRoom.resident.advanceBalance > 0 &&
+                      activeRoom.bill &&
+                      activeRoom.bill.remainingDue > 0,
+                  ) && (
+                    <div className="flex items-center justify-between rounded-2xl bg-emerald-50 border border-emerald-200 p-3">
+                      <div>
+                        <span className="text-xs font-bold text-emerald-900 block">
+                          Apply Advance Credit
+                        </span>
+                        <span className="text-[11px] text-emerald-700/90">
+                          Deduct up to ৳
+                          {Math.min(
+                            activeRoom.resident?.advanceBalance || 0,
+                            activeRoom.bill?.remainingDue || 0,
+                          ).toLocaleString()}{' '}
+                          from renter balance
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        disabled={applyingAdvance}
+                        onClick={handleApplyAdvance}
+                        className="rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-emerald-700 transition disabled:opacity-50"
                       >
-                        <option value="cash">Cash</option>
-                        <option value="bkash">bKash</option>
-                        <option value="nagad">Nagad</option>
-                        <option value="bank_transfer">Bank Transfer</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
-                        Date Received
-                      </label>
-                      <input
-                        type="date"
-                        value={payDate}
-                        onChange={(e) => setPayDate(e.target.value)}
-                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-800 focus:border-slate-950 focus:outline-none"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Reference Note (optional)
-                    </label>
-                    <input
-                      type="text"
-                      value={payRef}
-                      onChange={(e) => setPayRef(e.target.value)}
-                      placeholder="e.g. TrxID / Received by hand"
-                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 focus:border-slate-950 focus:outline-none"
-                    />
-                  </div>
-
-                  {paymentMessage && (
-                    <div
-                      className={`rounded-xl p-3 text-xs font-medium ${
-                        paymentMessage.isError
-                          ? 'bg-rose-50 text-rose-700 border border-rose-200'
-                          : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                      }`}
-                    >
-                      {paymentMessage.text}
+                        {applyingAdvance ? 'Applying...' : 'Apply Credit Now'}
+                      </button>
                     </div>
                   )}
 
-                  <button
-                    type="submit"
-                    disabled={savingPayment || !activeRoom.bill}
-                    className="w-full rounded-full bg-emerald-600 py-3 text-sm font-semibold text-white shadow-xs hover:bg-emerald-700 transition disabled:opacity-50"
-                  >
-                    {savingPayment ? 'Recording...' : 'Record Payment Now'}
-                  </button>
-                </form>
+                  {/* Payment Type Selector */}
+                  <div className="flex rounded-2xl bg-slate-100 p-1 text-xs font-semibold">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPayMode('bill')
+                        if (activeRoom.bill && activeRoom.bill.remainingDue > 0) {
+                          setPayAmount(String(activeRoom.bill.remainingDue))
+                        }
+                      }}
+                      className={`flex-1 rounded-xl py-2 transition text-center ${
+                        payMode === 'bill'
+                          ? 'bg-white text-slate-900 shadow-xs'
+                          : 'text-slate-500 hover:text-slate-800'
+                      }`}
+                    >
+                      📄 Regular Bill Payment
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPayMode('advance')
+                        setPayAmount('')
+                      }}
+                      className={`flex-1 rounded-xl py-2 transition text-center ${
+                        payMode === 'advance'
+                          ? 'bg-white text-emerald-700 shadow-xs'
+                          : 'text-slate-500 hover:text-slate-800'
+                      }`}
+                    >
+                      💰 Advance Payment Deposit
+                    </button>
+                  </div>
+
+                  {/* Payment Form */}
+                  <form onSubmit={handleRecordPayment} className="space-y-4">
+                    {payMode === 'advance' ? (
+                      <div className="rounded-xl bg-amber-50 border border-amber-200/80 p-2.5 text-[11px] text-amber-800 leading-relaxed">
+                        Recording an <strong>Advance Payment</strong> deposits the money directly into this renter&apos;s advance credit account. You can apply it towards future bills anytime.
+                      </div>
+                    ) : (
+                      <div className="rounded-xl bg-slate-50 border border-slate-200/80 p-2.5 text-[11px] text-slate-600 leading-relaxed">
+                        Recording a <strong>Bill Payment</strong> clears current/previous dues. Any amount exceeding total outstanding is automatically stored in the renter&apos;s Advance Balance.
+                      </div>
+                    )}
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        {payMode === 'advance' ? 'Advance Amount (BDT) *' : 'Amount Received (BDT) *'}
+                      </label>
+                      <div className="relative">
+                        <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-sm font-bold text-slate-400">
+                          ৳
+                        </span>
+                        <input
+                          type="number"
+                          min="1"
+                          step="1"
+                          required
+                          value={payAmount}
+                          onChange={(e) => setPayAmount(e.target.value)}
+                          placeholder="Enter payment amount"
+                          className="w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-8 pr-3 text-sm font-bold text-slate-900 focus:border-slate-950 focus:outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                          Payment Method
+                        </label>
+                        <select
+                          value={payMethod}
+                          onChange={(e) => setPayMethod(e.target.value as typeof payMethod)}
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-800 focus:border-slate-950 focus:outline-none"
+                        >
+                          <option value="cash">Cash</option>
+                          <option value="bkash">bKash</option>
+                          <option value="nagad">Nagad</option>
+                          <option value="bank_transfer">Bank Transfer</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                          Date Received
+                        </label>
+                        <input
+                          type="date"
+                          value={payDate}
+                          onChange={(e) => setPayDate(e.target.value)}
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-800 focus:border-slate-950 focus:outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        Reference / Note (optional)
+                      </label>
+                      <input
+                        type="text"
+                        value={payRef}
+                        onChange={(e) => setPayRef(e.target.value)}
+                        placeholder="e.g. TrxID / Advance deposit for next month"
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 focus:border-slate-950 focus:outline-none"
+                      />
+                    </div>
+
+                    {paymentMessage && (
+                      <div
+                        className={`rounded-xl p-3 text-xs font-medium ${
+                          paymentMessage.isError
+                            ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                            : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                        }`}
+                      >
+                        {paymentMessage.text}
+                      </div>
+                    )}
+
+                    <button
+                      type="submit"
+                      disabled={savingPayment || !activeRoom.resident || (payMode === 'bill' && !activeRoom.bill)}
+                      className={`w-full rounded-full py-3 text-sm font-semibold text-white shadow-xs transition disabled:opacity-50 ${
+                        payMode === 'advance'
+                          ? 'bg-emerald-700 hover:bg-emerald-800'
+                          : 'bg-slate-950 hover:bg-slate-800'
+                      }`}
+                    >
+                      {savingPayment
+                        ? 'Recording...'
+                        : payMode === 'advance'
+                        ? 'Deposit Advance Payment Now'
+                        : 'Record Bill Payment Now'}
+                    </button>
+                  </form>
+                </div>
               )}
             </div>
           </div>

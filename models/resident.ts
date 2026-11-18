@@ -6,6 +6,19 @@ const documentSchema = new Schema({
   unavailable: { type: Boolean, default: false },
 }, { _id: false })
 
+const roomHistorySchema = new Schema(
+  {
+    roomId: { type: Schema.Types.ObjectId, ref: 'Room', required: true },
+    roomNumber: { type: Number, required: true },
+    floor: { type: Number, required: true },
+    monthlyRent: { type: Number, required: true },
+    fromDate: { type: String, required: true },
+    toDate: { type: String, default: null },
+    reason: { type: String, default: '' },
+  },
+  { _id: false },
+)
+
 const residentSchema = new Schema({
   fullName: { type: String, required: true, trim: true, minlength: 2 },
   partnerName: { type: String, trim: true, default: '' },
@@ -33,6 +46,7 @@ const residentSchema = new Schema({
   securityDeposit: { type: Number, default: null, min: 0 },
   moveInDate: { type: String, required: true },
   moveOutDate: { type: String, default: null },
+  roomHistory: { type: [roomHistorySchema], default: [] },
   status: { type: String, enum: ['active', 'inactive'], default: 'active', required: true },
 }, { timestamps: true })
 

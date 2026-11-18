@@ -11,6 +11,7 @@ import {
 import { MonthlyBill } from '@/models/monthly-bill'
 import { Payment } from '@/models/payment'
 import { Resident } from '@/models/resident'
+import { Room } from '@/models/room'
 
 const cleanString = (value: unknown): string =>
   typeof value === 'string' ? value.trim() : ''
@@ -189,7 +190,110 @@ export async function POST(request: Request) {
         }
 
         // =====================================================================
-        // COLLECT PAYMENT WITH MANUAL CATEGORY ALLOCATION
+        // DIRECT ADVANCE PAYMENT / DEPOSIT (WITH OR WITHOUT BILL)
+        // =====================================================================
+        if (
+          action === 'record_advance' ||
+          body.paymentType === 'advance' ||
+          Boolean(body.isAdvance) ||
+          (!body.billId && body.residentId)
+        ) {
+          const residentId = cleanString(body.residentId)
+          if (!mongoose.isValidObjectId(residentId)) {
+            throw new Error('INVALID_RESIDENT_ID')
+          }
+          const rawAmount = Number(body.amountReceived ?? body.amount)
+          if (!Number.isFinite(rawAmount) || rawAmount <= 0) {
+            throw new Error('ZERO_PAYMENT_AMOUNT')
+          }
+
+          const rawMethod = cleanString(body.paymentMethod || 'Cash').toLowerCase()
+          let normalizedMethod: 'Cash' | 'Bank' | 'Mobile Banking' | 'Other' = 'Cash'
+          if (
+            ['bkash', 'nagad', 'rocket', 'upay', 'mobile banking', 'mobile_banking'].includes(
+              rawMethod,
+            )
+          ) {
+            normalizedMethod = 'Mobile Banking'
+          } else if (['bank', 'bank_transfer', 'bank transfer'].includes(rawMethod)) {
+            normalizedMethod = 'Bank'
+          } else if (rawMethod === 'cash') {
+            normalizedMethod = 'Cash'
+          } else {
+            normalizedMethod = 'Other'
+          }
+
+          const paymentDate =
+            cleanString(body.paymentDate) || new Date().toISOString().slice(0, 10)
+          const notes = cleanString(body.notes) || 'Advance payment deposit'
+          const transactionReference = cleanString(body.transactionReference)
+
+          const resident = await Resident.findById(residentId).session(session)
+          if (!resident) {
+            throw new Error('RESIDENT_NOT_FOUND')
+          }
+
+          const amountPaisa = toPaisa(rawAmount)
+          ;(resident as { advanceBalance?: number }).advanceBalance = fromPaisa(
+            toPaisa((resident as { advanceBalance?: number }).advanceBalance ?? 0) +
+              amountPaisa,
+          )
+          await resident.save({ session })
+
+          const roomId =
+            resident.roomId ??
+            (body.roomId && mongoose.isValidObjectId(body.roomId)
+              ? new mongoose.Types.ObjectId(body.roomId)
+              : null)
+          let roomNumber = 0
+          if (roomId) {
+            const rm = await Room.findById(roomId).session(session)
+            if (rm) roomNumber = rm.roomNumber
+          }
+
+          const billingMonth =
+            cleanString(body.billingMonth) || new Date().toISOString().slice(0, 7)
+
+          const [advPayment] = await Payment.create(
+            [
+              {
+                residentId: resident._id,
+                roomId: roomId || resident._id,
+                billId: null,
+                residentName: resident.fullName,
+                roomNumber,
+                paymentDate,
+                billingMonth,
+                amountReceived: rawAmount,
+                paymentMethod: normalizedMethod,
+                transactionReference,
+                notes,
+                rentAllocation: 0,
+                electricityAllocation: 0,
+                wifiAllocation: 0,
+                otherAllocation: 0,
+                previousDueAllocation: 0,
+                advanceAllocation: rawAmount,
+                allocationDetails: [
+                  {
+                    targetBillId: null,
+                    billingMonth,
+                    category: 'advance',
+                    amount: rawAmount,
+                  },
+                ],
+                status: 'completed',
+              },
+            ],
+            { session },
+          )
+
+          createdOrUpdatedPaymentId = advPayment._id
+          return
+        }
+
+        // =====================================================================
+        // COLLECT BILL PAYMENT WITH MANUAL OR AUTO ALLOCATION
         // =====================================================================
         const billId = cleanString(body.billId)
         if (!mongoose.isValidObjectId(billId)) {
@@ -198,16 +302,27 @@ export async function POST(request: Request) {
 
         const paymentDate =
           cleanString(body.paymentDate) || new Date().toISOString().slice(0, 10)
-        const paymentMethod = cleanString(body.paymentMethod) || 'Cash'
+        const rawMethod = cleanString(body.paymentMethod || 'Cash').toLowerCase()
+        let paymentMethod: 'Cash' | 'Bank' | 'Mobile Banking' | 'Other' = 'Cash'
+        if (
+          ['bkash', 'nagad', 'rocket', 'upay', 'mobile banking', 'mobile_banking'].includes(
+            rawMethod,
+          )
+        ) {
+          paymentMethod = 'Mobile Banking'
+        } else if (['bank', 'bank_transfer', 'bank transfer'].includes(rawMethod)) {
+          paymentMethod = 'Bank'
+        } else if (rawMethod === 'cash') {
+          paymentMethod = 'Cash'
+        } else {
+          paymentMethod = 'Other'
+        }
+
         const transactionReference = cleanString(body.transactionReference)
         const notes = cleanString(body.notes)
         const recordExcessAsAdvance = Boolean(
-          body.recordExcessAsAdvance || body.confirmAdvance,
+          body.recordExcessAsAdvance || (body.confirmAdvance ?? true),
         )
-
-        if (!['Cash', 'Bank', 'Mobile Banking', 'Other'].includes(paymentMethod)) {
-          throw new Error('INVALID_PAYMENT_METHOD')
-        }
 
         if (transactionReference) {
           const duplicate = await Payment.findOne({
@@ -219,14 +334,87 @@ export async function POST(request: Request) {
           }
         }
 
-        const amountReceivedNum = Number(body.amountReceived)
-        const rentAllocNum = Number(body.rentAllocation ?? 0)
-        const elecAllocNum = Number(body.electricityAllocation ?? 0)
-        const wifiAllocNum = Number(body.wifiAllocation ?? 0)
-        const otherAllocNum = Number(body.otherAllocation ?? 0)
-        const prevDueAllocNum = Number(body.previousDueAllocation ?? 0)
-        const advanceAllocNum = Number(body.advanceAllocation ?? 0)
+        const bill = await MonthlyBill.findById(billId).session(session)
+        if (!bill) {
+          throw new Error('BILL_NOT_FOUND')
+        }
 
+        const catState = computeBillCategoryState(bill)
+
+        const rawAmountReceived = Number(body.amountReceived ?? body.amount)
+        if (!Number.isFinite(rawAmountReceived) || rawAmountReceived <= 0) {
+          throw new Error('ZERO_PAYMENT_AMOUNT')
+        }
+
+        let rentAllocNum = Number(body.rentAllocation ?? 0)
+        let elecAllocNum = Number(body.electricityAllocation ?? 0)
+        let wifiAllocNum = Number(body.wifiAllocation ?? 0)
+        let otherAllocNum = Number(body.otherAllocation ?? 0)
+        let prevDueAllocNum = Number(body.previousDueAllocation ?? 0)
+        let advanceAllocNum = Number(body.advanceAllocation ?? 0)
+
+        const hasExplicitAllocations =
+          rentAllocNum > 0 ||
+          elecAllocNum > 0 ||
+          wifiAllocNum > 0 ||
+          otherAllocNum > 0 ||
+          prevDueAllocNum > 0 ||
+          advanceAllocNum > 0
+
+        // Auto-allocate if user did not pass specific line-item breakdowns
+        if (!hasExplicitAllocations) {
+          let remainingPaisa = toPaisa(rawAmountReceived)
+
+          // 1. Rent
+          const rentDuePaisa = toPaisa(catState.unpaidRent)
+          const rentApplyPaisa = Math.min(remainingPaisa, rentDuePaisa)
+          rentAllocNum = fromPaisa(rentApplyPaisa)
+          remainingPaisa -= rentApplyPaisa
+
+          // 2. Electricity
+          const elecDuePaisa = toPaisa(catState.unpaidElectricity)
+          const elecApplyPaisa = Math.min(remainingPaisa, elecDuePaisa)
+          elecAllocNum = fromPaisa(elecApplyPaisa)
+          remainingPaisa -= elecApplyPaisa
+
+          // 3. WiFi
+          const wifiDuePaisa = toPaisa(catState.unpaidWifi)
+          const wifiApplyPaisa = Math.min(remainingPaisa, wifiDuePaisa)
+          wifiAllocNum = fromPaisa(wifiApplyPaisa)
+          remainingPaisa -= wifiApplyPaisa
+
+          // 4. Other
+          const otherDuePaisa = toPaisa(catState.unpaidOther)
+          const otherApplyPaisa = Math.min(remainingPaisa, otherDuePaisa)
+          otherAllocNum = fromPaisa(otherApplyPaisa)
+          remainingPaisa -= otherApplyPaisa
+
+          // 5. Previous Outstanding Dues
+          if (remainingPaisa > 0) {
+            const priorBills = await MonthlyBill.find({
+              residentId: bill.residentId,
+              billingMonth: { $lt: bill.billingMonth },
+            })
+              .sort({ billingMonth: 1 })
+              .session(session)
+
+            const availablePriorPaisa = priorBills.reduce(
+              (sum, p) =>
+                sum + toPaisa(computeBillCategoryState(p).currentMonthUnpaid),
+              0,
+            )
+            const prevApplyPaisa = Math.min(remainingPaisa, availablePriorPaisa)
+            prevDueAllocNum = fromPaisa(prevApplyPaisa)
+            remainingPaisa -= prevApplyPaisa
+          }
+
+          // 6. Excess is stored as Advance Credit
+          if (remainingPaisa > 0) {
+            advanceAllocNum = fromPaisa(remainingPaisa)
+          }
+        }
+
+        const amountReceivedNum = rawAmountReceived
         const nums = [
           amountReceivedNum,
           rentAllocNum,
@@ -241,10 +429,6 @@ export async function POST(request: Request) {
         }
 
         const amountReceivedPaisa = toPaisa(amountReceivedNum)
-        if (amountReceivedPaisa <= 0) {
-          throw new Error('ZERO_PAYMENT_AMOUNT')
-        }
-
         const rentAllocPaisa = toPaisa(rentAllocNum)
         const elecAllocPaisa = toPaisa(elecAllocNum)
         const wifiAllocPaisa = toPaisa(wifiAllocNum)
@@ -268,12 +452,6 @@ export async function POST(request: Request) {
           throw new Error('ADVANCE_CONFIRMATION_REQUIRED')
         }
 
-        const bill = await MonthlyBill.findById(billId).session(session)
-        if (!bill) {
-          throw new Error('BILL_NOT_FOUND')
-        }
-
-        const catState = computeBillCategoryState(bill)
         if (rentAllocPaisa > toPaisa(catState.unpaidRent)) {
           throw new Error('EXCEEDS_RENT_DUE')
         }

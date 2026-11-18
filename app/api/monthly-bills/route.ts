@@ -79,10 +79,15 @@ export async function POST(request: Request) {
       await session.withTransaction(async () => {
         generatedCount = 0
         skippedCount = 0
-        const residentQuery: Record<string, unknown> = { status: 'active' }
-        if (targetResidentId && mongoose.isValidObjectId(targetResidentId)) {
-          residentQuery._id = new mongoose.Types.ObjectId(targetResidentId)
-        }
+        const residentQuery: Record<string, unknown> =
+          targetResidentId && mongoose.isValidObjectId(targetResidentId)
+            ? { _id: new mongoose.Types.ObjectId(targetResidentId) }
+            : {
+                $or: [
+                  { status: 'active' },
+                  { moveOutDate: { $gte: `${billingMonth}-01` } },
+                ],
+              }
         const activeResidents = await Resident.find(residentQuery)
           .populate('roomId')
           .session(session)
@@ -113,7 +118,18 @@ export async function POST(request: Request) {
         )
         skippedCount = existingBills.length
         const residentsToGenerate = activeResidents.filter(
-          (res: { _id: mongoose.Types.ObjectId }) => !existingResidentIds.has(String(res._id)),
+          (res: {
+            _id: mongoose.Types.ObjectId
+            moveInDate?: string
+            moveOutDate?: string | null
+          }) => {
+            if (existingResidentIds.has(String(res._id))) return false
+            const moveInMonth = (res.moveInDate || '').slice(0, 7)
+            if (moveInMonth && moveInMonth > billingMonth) return false
+            const moveOutMonth = (res.moveOutDate || '').slice(0, 7)
+            if (moveOutMonth && moveOutMonth < billingMonth) return false
+            return true
+          },
         )
 
         if (residentsToGenerate.length === 0) {
@@ -181,7 +197,40 @@ export async function POST(request: Request) {
             roomNumber: number
             floor: number
           }
-          const roomIdStr = String(roomObj._id)
+          let effectiveRoomId = roomObj?._id
+          let effectiveRoomNumber = roomObj?.roomNumber ?? 0
+          let effectiveFloor = roomObj?.floor ?? 0
+          let effectiveRent = res.monthlyRent
+
+          const history = (
+            res as {
+              roomHistory?: Array<{
+                roomId: mongoose.Types.ObjectId
+                roomNumber: number
+                floor: number
+                monthlyRent: number
+                fromDate: string
+                toDate?: string | null
+              }>
+            }
+          ).roomHistory
+          if (Array.isArray(history) && history.length > 0) {
+            const matchingHistory = history.find((h) => {
+              const fromMonth = (h.fromDate || '').slice(0, 7)
+              const toMonth = h.toDate ? h.toDate.slice(0, 7) : '9999-12'
+              return fromMonth <= billingMonth && toMonth >= billingMonth
+            })
+            if (matchingHistory) {
+              effectiveRoomId = new mongoose.Types.ObjectId(
+                String(matchingHistory.roomId),
+              )
+              effectiveRoomNumber = matchingHistory.roomNumber
+              effectiveFloor = matchingHistory.floor
+              effectiveRent = matchingHistory.monthlyRent
+            }
+          }
+
+          const roomIdStr = String(effectiveRoomId)
           const resIdStr = String(res._id)
           const alloc = allocByRoomId.get(roomIdStr)
 
@@ -224,12 +273,12 @@ export async function POST(request: Request) {
               {
                 billingMonth,
                 residentId: res._id,
-                roomId: roomObj._id,
+                roomId: effectiveRoomId,
                 residentName: res.fullName,
                 residentPhone: res.phone,
-                roomNumber: roomObj.roomNumber,
-                floor: roomObj.floor,
-                monthlyRent: res.monthlyRent,
+                roomNumber: effectiveRoomNumber,
+                floor: effectiveFloor,
+                monthlyRent: effectiveRent,
                 electricityAllocationId:
                   hasUsableAllocation && alloc ? alloc._id : null,
                 electricityUnits,

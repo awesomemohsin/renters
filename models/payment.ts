@@ -5,7 +5,8 @@ const paymentAllocationDetailSchema = new Schema(
     targetBillId: {
       type: Schema.Types.ObjectId,
       ref: 'MonthlyBill',
-      required: true,
+      required: false,
+      default: null,
     },
     billingMonth: { type: String, required: true, trim: true },
     category: {
@@ -31,7 +32,7 @@ const paymentSchema = new Schema(
   {
     residentId: { type: Schema.Types.ObjectId, ref: 'Resident', required: true },
     roomId: { type: Schema.Types.ObjectId, ref: 'Room', required: true },
-    billId: { type: Schema.Types.ObjectId, ref: 'MonthlyBill', required: true },
+    billId: { type: Schema.Types.ObjectId, ref: 'MonthlyBill', required: false, default: null },
     residentName: { type: String, required: true, trim: true },
     roomNumber: { type: Number, required: true, min: 1, max: 26 },
     paymentDate: { type: String, required: true, trim: true },

@@ -222,7 +222,15 @@ export async function getMonthlyBillingWorkspace(billingMonth: string) {
     billMonths,
     activeWifiConfigs,
   ] = await Promise.all([
-    Resident.find({ status: 'active' }).populate('roomId').sort({ createdAt: -1 }).lean(),
+    Resident.find({
+      $or: [
+        { status: 'active' },
+        { moveOutDate: { $gte: `${billingMonth}-01` } },
+      ],
+    })
+      .populate('roomId')
+      .sort({ createdAt: -1 })
+      .lean(),
     Room.find().sort({ roomNumber: 1 }).lean(),
     MonthlyBill.find({ billingMonth }).sort({ roomNumber: 1 }).lean(),
     MonthlyBill.find({ billingMonth: { $lt: billingMonth } })
@@ -270,15 +278,45 @@ export async function getMonthlyBillingWorkspace(billingMonth: string) {
   }
 
   const residentsPreview = activeResidents
+    .filter((res) => {
+      // 1-month lag / tenancy window check:
+      // A resident is only billed for a month if they moved in on or before that month
+      const moveInMonth = (res.moveInDate || '').slice(0, 7)
+      if (moveInMonth && moveInMonth > billingMonth) {
+        return false // Moved in after this billing month
+      }
+      const moveOutMonth = (res.moveOutDate || '').slice(0, 7)
+      if (moveOutMonth && moveOutMonth < billingMonth) {
+        return false // Vacated prior to this billing month
+      }
+      return true
+    })
     .map((res) => {
       const roomObj = res.roomId as unknown as {
         _id: mongoose.Types.ObjectId
         roomNumber: number
         floor: number
       } | null
-      const roomIdStr = roomObj ? String(roomObj._id) : ''
-      const roomNumber = roomObj?.roomNumber ?? 0
-      const floor = roomObj?.floor ?? 0
+      let roomIdStr = roomObj ? String(roomObj._id) : ''
+      let roomNumber = roomObj?.roomNumber ?? 0
+      let floor = roomObj?.floor ?? 0
+      let monthlyRent = res.monthlyRent
+
+      // If resident has room transfer history, check which room they occupied in billingMonth
+      const history = (res as { roomHistory?: Array<{ roomId: unknown; roomNumber: number; floor: number; monthlyRent: number; fromDate: string; toDate?: string | null }> }).roomHistory
+      if (Array.isArray(history) && history.length > 0) {
+        const matchingEntry = history.find((h) => {
+          const fromMonth = (h.fromDate || '').slice(0, 7)
+          const toMonth = h.toDate ? h.toDate.slice(0, 7) : '9999-12'
+          return fromMonth <= billingMonth && toMonth >= billingMonth
+        })
+        if (matchingEntry) {
+          roomIdStr = String(matchingEntry.roomId)
+          roomNumber = matchingEntry.roomNumber
+          floor = matchingEntry.floor
+          monthlyRent = matchingEntry.monthlyRent
+        }
+      }
 
       const existingBill = billByResidentId.get(String(res._id)) ?? null
       const alloc = roomIdStr ? allocByRoomId.get(roomIdStr) : null
@@ -291,11 +329,11 @@ export async function getMonthlyBillingWorkspace(billingMonth: string) {
       const wifiCharge = activeWifi ? activeWifi.monthlyCharge : 0
       const previousOutstanding = priorUnpaidByResidentId.get(String(res._id)) ?? 0
       const estimatedTotalPayable = roundMoney(
-        res.monthlyRent + totalElectricity + wifiCharge + previousOutstanding,
+        monthlyRent + totalElectricity + wifiCharge + previousOutstanding,
       )
 
       const missingDataWarnings: string[] = []
-      if (!roomObj) {
+      if (!roomIdStr) {
         missingDataWarnings.push('Resident has no assigned room.')
       } else if (!alloc) {
         missingDataWarnings.push(
@@ -315,7 +353,7 @@ export async function getMonthlyBillingWorkspace(billingMonth: string) {
         roomId: roomIdStr,
         roomNumber,
         floor,
-        monthlyRent: res.monthlyRent,
+        monthlyRent,
         wifiCharge,
         electricity: {
           hasAllocation: Boolean(alloc),
