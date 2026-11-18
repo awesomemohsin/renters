@@ -659,8 +659,120 @@ export function MonthlyRecordsPage() {
         </div>
       </div>
 
-      {/* Monthly Bills Table */}
-      <div className="mt-5 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs">
+      {/* Mobile & Tablet Card View (No Side-Scrolling!) */}
+      <div className="mt-4 space-y-3 lg:hidden">
+        {filteredBills.map((bill) => {
+          return (
+            <article
+              key={bill._id}
+              className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-xs transition hover:border-slate-300"
+            >
+              {/* Card Header: Room + Resident & Status */}
+              <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-2.5">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-slate-950 text-sm">
+                      Room {formatRoomNumber(bill.roomNumber)}
+                    </span>
+                    <span className="text-[11px] font-medium text-slate-400">
+                      Floor {bill.floor}
+                    </span>
+                  </div>
+                  <Link
+                    href={`/residents/${bill.residentId}`}
+                    className="font-medium text-xs text-slate-800 hover:underline mt-0.5 block"
+                  >
+                    {bill.residentName}
+                  </Link>
+                  <p className="text-[10px] text-slate-400">{bill.residentPhone}</p>
+                </div>
+                <span
+                  className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium shrink-0 ${getStatusBadgeClass(
+                    bill.status,
+                  )}`}
+                >
+                  {bill.isLocked && <Lock className="size-2.5" />}
+                  {formatStatusLabel(bill.status)}
+                </span>
+              </div>
+
+              {/* Bill Details Grid: 4 items (Rent, Electricity, WiFi, Prev Due) */}
+              <div className="grid grid-cols-4 gap-1.5 py-2.5 text-center border-b border-slate-100 bg-slate-50/60 rounded-xl my-2 px-1">
+                <div>
+                  <p className="text-[10px] text-slate-400">Rent</p>
+                  <p className="text-xs font-semibold text-slate-800 mt-0.5">
+                    {formatCurrency(bill.monthlyRent)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-slate-400">Electricity</p>
+                  <p className="text-xs font-semibold text-slate-800 mt-0.5">
+                    {formatCurrency(bill.totalElectricity)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-slate-400">WiFi</p>
+                  <p className="text-xs font-semibold text-slate-800 mt-0.5">
+                    {formatCurrency(bill.wifiCharge)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-slate-400">Prev. Due</p>
+                  <p
+                    className={`text-xs font-semibold mt-0.5 ${
+                      bill.previousOutstanding > 0 ? 'text-amber-700' : 'text-slate-500'
+                    }`}
+                  >
+                    {formatCurrency(bill.previousOutstanding)}
+                  </p>
+                </div>
+              </div>
+
+              {/* Card Footer: Total, Paid, Due & Action Buttons */}
+              <div className="flex items-center justify-between gap-2 pt-1">
+                <div>
+                  <p className="text-xs text-slate-500">
+                    Payable: <span className="font-semibold text-slate-900">{formatCurrency(bill.totalPayable)}</span>
+                    {' · '}Paid: <span className="font-semibold text-emerald-700">{formatCurrency(bill.totalPaid)}</span>
+                  </p>
+                  <p className="text-xs font-bold text-rose-600 mt-0.5">
+                    Remaining Due: {formatCurrency(bill.remainingDue)}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {!bill.isLocked && (
+                    <Button size="xs" onClick={() => openCollectModalForBill(bill)}>
+                      <CreditCard className="size-3" /> Collect
+                    </Button>
+                  )}
+                  <Button
+                    size="xs"
+                    variant="outline"
+                    onClick={() => {
+                      setBillDetailError('')
+                      setActiveBillId(bill._id)
+                    }}
+                  >
+                    Details
+                  </Button>
+                </div>
+              </div>
+            </article>
+          )
+        })}
+
+        {!loading && filteredBills.length === 0 && (
+          <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-xs text-slate-500">
+            {workspace?.bills.length === 0
+              ? `No monthly bills generated for ${formatMonthLabel(selectedMonth)} yet. Click "Generate Monthly Bills" above to start.`
+              : 'No monthly bills match the current filters.'}
+          </div>
+        )}
+      </div>
+
+      {/* Desktop Monthly Bills Table */}
+      <div className="mt-5 hidden lg:block overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[1080px] text-left text-sm">
             <thead className="border-b border-slate-100 bg-slate-50 text-xs uppercase tracking-wide text-slate-400">

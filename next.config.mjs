@@ -2,6 +2,7 @@
 const nextConfig = {
   experimental: {
     agentUpgrade: 'security',
+    cpus: 2,
   },
   images: {
     unoptimized: true,

@@ -526,8 +526,114 @@ export function WiFiManagementPage() {
         </div>
       </div>
 
-      {/* WiFi Table */}
-      <div className="mt-5 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs">
+      {/* Mobile & Tablet Card View (No Side-Scrolling!) */}
+      <div className="mt-4 space-y-3 lg:hidden">
+        {filteredRows.map((row) => (
+          <article
+            key={row.residentId}
+            className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-xs transition hover:border-slate-300"
+          >
+            {/* Header: Room + Resident + Status */}
+            <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-2.5">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-slate-950 text-sm">
+                    Room {formatRoomNumber(row.roomNumber)}
+                  </span>
+                  <span className="text-[11px] font-medium text-slate-400">
+                    Floor {row.floor}
+                  </span>
+                </div>
+                <Link
+                  href={`/residents/${row.residentId}`}
+                  className="font-medium text-xs text-slate-800 hover:underline mt-0.5 block"
+                >
+                  {row.residentName}
+                </Link>
+                <p className="text-[10px] text-slate-400">{row.residentPhone}</p>
+              </div>
+              <span
+                className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium shrink-0 ${
+                  row.status === 'active'
+                    ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                    : 'border-slate-200 bg-slate-50 text-slate-600'
+                }`}
+              >
+                {row.status === 'active' ? 'Active' : 'Inactive'}
+              </span>
+            </div>
+
+            {/* WiFi Details Row */}
+            <div className="grid grid-cols-3 gap-1.5 py-2.5 text-center border-b border-slate-100 bg-slate-50/60 rounded-xl my-2 px-1">
+              <div>
+                <p className="text-[10px] text-slate-400">WiFi SSID</p>
+                <p className="text-xs font-semibold text-slate-800 mt-0.5 truncate px-1">
+                  {row.wifiName === 'Not configured' ? 'None' : row.wifiName}
+                </p>
+              </div>
+              <div>
+                <p className="text-[10px] text-slate-400">Devices</p>
+                <p className="text-xs font-semibold text-slate-800 mt-0.5">
+                  {row.activeDeviceCount} active
+                </p>
+              </div>
+              <div>
+                <p className="text-[10px] text-slate-400">Monthly</p>
+                <p className="text-xs font-semibold text-slate-800 mt-0.5">
+                  {formatCurrency(row.monthlyCharge)}
+                </p>
+              </div>
+            </div>
+
+            {/* Footer: Outstanding & Actions */}
+            <div className="flex items-center justify-between gap-2 pt-1">
+              <div>
+                <p className="text-xs text-slate-500">
+                  Outstanding:{' '}
+                  <span
+                    className={`font-semibold ${
+                      row.outstandingWiFi > 0 ? 'text-rose-600' : 'text-slate-700'
+                    }`}
+                  >
+                    {formatCurrency(row.outstandingWiFi)}
+                  </span>
+                </p>
+              </div>
+
+              <div className="flex items-center gap-1.5 shrink-0">
+                <Button
+                  size="xs"
+                  variant="outline"
+                  className="border-slate-300 bg-white text-slate-800 shadow-xs hover:bg-slate-100 hover:text-slate-900"
+                  onClick={() => openConfigModal(row)}
+                >
+                  <Pencil className="size-3 text-slate-600" />
+                  <span className="font-medium">Profile</span>
+                </Button>
+                <Button
+                  size="xs"
+                  variant="secondary"
+                  className="border border-slate-200 bg-slate-100 text-slate-800 shadow-xs hover:bg-slate-200 hover:text-slate-900"
+                  onClick={() => openDeviceModal(row)}
+                  disabled={!row.hasConfiguration && row.residentStatus === 'inactive'}
+                >
+                  <Cpu className="size-3 text-slate-600" />
+                  <span className="font-medium">Devices ({row.activeDeviceCount})</span>
+                </Button>
+              </div>
+            </div>
+          </article>
+        ))}
+
+        {!loading && filteredRows.length === 0 && (
+          <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-xs text-slate-500">
+            No WiFi records found.
+          </div>
+        )}
+      </div>
+
+      {/* Desktop WiFi Table */}
+      <div className="mt-5 hidden lg:block overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[980px] text-left text-sm">
             <thead className="border-b border-slate-100 bg-slate-50 text-xs uppercase tracking-wide text-slate-400">

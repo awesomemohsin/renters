@@ -82,7 +82,9 @@ export function RentersShell({
   const isSecondaryActive =
     pathname === '/utilities' || pathname === '/wifi' || pathname === '/reports'
 
-  const secondaryActiveItem = navigation.find((n) => n.href === pathname)
+  const secondaryActiveItem = isSecondaryActive
+    ? navigation.find((n) => n.href === pathname)
+    : null
 
   return (
     <div className="min-h-screen bg-[#f6f8fb] text-slate-950">

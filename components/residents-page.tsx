@@ -257,7 +257,119 @@ export function ResidentsPage() {
 
       {error && !open && <p className="mt-3 text-xs sm:text-sm text-red-600">{error}</p>}
 
-      <div className="mt-4 sm:mt-5 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs">
+      {/* Mobile & Tablet Card View (No Side-Scrolling!) */}
+      <div className="mt-4 space-y-3 lg:hidden">
+        {residents.map((resident) => {
+          const bs = resident.billingSummary
+          return (
+            <article
+              key={resident._id}
+              className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-xs transition hover:border-slate-300"
+            >
+              {/* Header: Room badge + Resident Name & Status */}
+              <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-2.5">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-slate-950 text-sm">
+                      {resident.roomId
+                        ? `Room ${formatRoomNumber(resident.roomId.roomNumber)}`
+                        : 'Vacated'}
+                    </span>
+                    {resident.roomId && (
+                      <span className="text-[11px] font-medium text-slate-400">
+                        Floor {resident.roomId.floor}
+                      </span>
+                    )}
+                  </div>
+                  <Link
+                    href={`/residents/${resident._id}`}
+                    className="font-medium text-xs text-slate-800 hover:underline mt-0.5 block"
+                  >
+                    {resident.fullName}
+                  </Link>
+                  <p className="text-[10px] text-slate-400">
+                    {resident.phone}
+                    {bs ? ` · Bill ${bs.billingMonth}` : ''}
+                  </p>
+                </div>
+                <span
+                  className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium shrink-0 ${
+                    resident.status === 'active'
+                      ? 'border border-emerald-200 bg-emerald-50 text-emerald-700'
+                      : 'border border-slate-200 bg-slate-50 text-slate-500'
+                  }`}
+                >
+                  {resident.status === 'active' ? 'Active' : 'Inactive'}
+                </span>
+              </div>
+
+              {/* Dues Breakdown Grid (3 columns) */}
+              <div className="grid grid-cols-3 gap-1.5 py-2.5 text-center border-b border-slate-100 bg-slate-50/60 rounded-xl my-2 px-1">
+                <div>
+                  <p className="text-[10px] text-slate-400">Rent</p>
+                  <p className="text-xs font-semibold text-slate-800 mt-0.5">
+                    {formatCurrency(resident.monthlyRent)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-slate-400">Electricity</p>
+                  <p className="text-xs font-semibold text-slate-800 mt-0.5">
+                    {bs ? formatCurrency(bs.electricityDue) : '—'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-slate-400">WiFi</p>
+                  <p className="text-xs font-semibold text-slate-800 mt-0.5">
+                    {bs ? formatCurrency(bs.wifiDue) : formatCurrency(resident.wifiCharge ?? 0)}
+                  </p>
+                </div>
+              </div>
+
+              {/* Footer: Payable, Paid, Remaining Due & Actions */}
+              <div className="flex items-center justify-between gap-2 pt-1">
+                <div>
+                  {bs ? (
+                    <>
+                      <p className="text-xs text-slate-500">
+                        Payable: <span className="font-semibold text-slate-900">{formatCurrency(bs.totalPayable)}</span>
+                        {' · '}Paid: <span className="font-semibold text-emerald-700">{formatCurrency(bs.totalPaid)}</span>
+                      </p>
+                      <p className="text-xs font-bold text-rose-600 mt-0.5">
+                        Remaining Due: {formatCurrency(bs.remainingDue)}
+                      </p>
+                    </>
+                  ) : (
+                    <p className="text-xs text-slate-400">No active bill for this month</p>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {bs && !bs.isLocked && (
+                    <Button size="xs" onClick={() => openQuickCollect(resident)}>
+                      <CreditCard className="size-3" /> Collect
+                    </Button>
+                  )}
+                  <Link
+                    href={`/residents/${resident._id}`}
+                    className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-700 shadow-xs hover:bg-slate-50 hover:text-slate-900"
+                  >
+                    Profile
+                  </Link>
+                </div>
+              </div>
+            </article>
+          )
+        })}
+
+        {residents.length === 0 && (
+          <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-xs text-slate-500">
+            No residents found.
+          </div>
+        )}
+      </div>
+
+      {/* Desktop Table View */}
+      <div className="mt-4 sm:mt-5 hidden lg:block overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[1000px] text-left text-xs sm:text-sm">
             <thead className="border-b border-slate-100 bg-slate-50 text-[11px] sm:text-xs uppercase tracking-wide text-slate-400">
