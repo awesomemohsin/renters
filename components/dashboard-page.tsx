@@ -42,7 +42,7 @@ import {
   X,
   Zap,
 } from 'lucide-react'
-import { formatCurrency, formatRoomNumber } from '@/lib/utils'
+import { formatBillingMonth, formatCurrency, formatRoomNumber } from '@/lib/utils'
 
 type PastResident = {
   _id: string
@@ -750,7 +750,7 @@ export function DashboardPage() {
             >
               {data?.availableMonths.map((m) => (
                 <option key={m} value={m}>
-                  {new Date(m + '-01').toLocaleDateString('en-US', { month: 'short', year: 'numeric' })} ({m})
+                  {formatBillingMonth(m)} ({m})
                 </option>
               ))}
             </select>
