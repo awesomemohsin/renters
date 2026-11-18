@@ -480,30 +480,30 @@ export function MonthlyRecordsPage() {
   }
 
   return (
-    <main className="mx-auto max-w-7xl px-5 py-8 sm:px-8 sm:py-10">
+    <main className="mx-auto max-w-7xl px-3.5 py-5 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
       {/* Header & Month Selector */}
-      <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
+      <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
         <div>
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600">
-            <CalendarDays aria-hidden="true" className="size-3.5 text-slate-700" />
+          <div className="mb-2.5 inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600">
+            <CalendarDays aria-hidden="true" className="size-3 text-slate-700" />
             Monthly billing & due management
           </div>
-          <h2 className="text-3xl font-semibold tracking-[-0.04em] text-slate-950 sm:text-4xl">
+          <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight text-slate-950">
             {formatMonthLabel(selectedMonth)} Billing
           </h2>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+          <p className="mt-1 max-w-2xl text-xs sm:text-sm leading-relaxed text-slate-500">
             Generate monthly bills from rent, finalized electricity shares, and WiFi charges. Collect partial or full
             payments with manual category allocation and automatic carry-forward of unpaid dues.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-1.5 shadow-xs">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full lg:w-auto">
+          <div className="flex items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white p-1.5 shadow-xs">
             <select
               aria-label="Select billing month"
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
-              className="h-8 rounded-lg bg-transparent px-2.5 text-sm font-medium text-slate-800 outline-none"
+              className="h-8 rounded-lg bg-transparent px-2 text-xs sm:text-sm font-medium text-slate-800 outline-none"
             >
               {monthOptions.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -518,17 +518,18 @@ export function MonthlyRecordsPage() {
               onChange={(e) => {
                 if (e.target.value) setSelectedMonth(e.target.value)
               }}
-              className="h-8 rounded-lg border border-slate-200 px-2.5 text-xs text-slate-600"
+              className="h-8 rounded-lg border border-slate-200 px-2 text-xs text-slate-600"
             />
           </div>
 
           <Button
+            className="w-full sm:w-auto text-xs sm:text-sm h-9"
             onClick={() => {
               setGenerateError('')
               setGenerateOpen(true)
             }}
           >
-            <FileSpreadsheet data-icon="inline-start" />
+            <FileSpreadsheet data-icon="inline-start" className="size-3.5" />
             Generate Monthly Bills
           </Button>
         </div>
@@ -568,58 +569,58 @@ export function MonthlyRecordsPage() {
       )}
 
       {/* 7 Summary Cards */}
-      <section aria-label="Monthly billing summary" className="mt-7 grid gap-3.5 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
-        <article className="rounded-2xl border border-slate-200 bg-white p-4">
-          <p className="text-xs text-slate-500">Total Monthly Bills</p>
-          <p className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">{summary.totalMonthlyBills}</p>
-          <p className="mt-1 text-[11px] text-slate-400">Generated for {selectedMonth}</p>
+      <section aria-label="Monthly billing summary" className="mt-5 sm:mt-7 grid grid-cols-2 gap-2.5 sm:gap-3.5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">
+        <article className="rounded-2xl border border-slate-200 bg-white p-3 sm:p-4">
+          <p className="text-[11px] sm:text-xs text-slate-500">Monthly Bills</p>
+          <p className="mt-1 sm:mt-2 text-lg sm:text-2xl font-bold tracking-tight text-slate-950">{summary.totalMonthlyBills}</p>
+          <p className="mt-0.5 text-[10px] sm:text-[11px] text-slate-400">For {selectedMonth}</p>
         </article>
 
-        <article className="rounded-2xl border border-slate-200 bg-white p-4">
-          <p className="text-xs text-slate-500">Total Payable</p>
-          <p className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
+        <article className="rounded-2xl border border-slate-200 bg-white p-3 sm:p-4">
+          <p className="text-[11px] sm:text-xs text-slate-500">Total Payable</p>
+          <p className="mt-1 sm:mt-2 text-lg sm:text-2xl font-bold tracking-tight text-slate-950">
             {formatCurrency(summary.totalPayable)}
           </p>
-          <p className="mt-1 text-[11px] text-slate-400">Includes prior dues</p>
+          <p className="mt-0.5 text-[10px] sm:text-[11px] text-slate-400">Includes prior dues</p>
         </article>
 
-        <article className="rounded-2xl border border-slate-200 bg-white p-4">
-          <p className="text-xs text-slate-500">Total Collected</p>
-          <p className="mt-2 text-2xl font-semibold tracking-tight text-emerald-700">
+        <article className="rounded-2xl border border-slate-200 bg-white p-3 sm:p-4">
+          <p className="text-[11px] sm:text-xs text-slate-500">Total Collected</p>
+          <p className="mt-1 sm:mt-2 text-lg sm:text-2xl font-bold tracking-tight text-emerald-700">
             {formatCurrency(summary.totalCollected)}
           </p>
-          <p className="mt-1 text-[11px] text-slate-400">Payments & credits</p>
+          <p className="mt-0.5 text-[10px] sm:text-[11px] text-slate-400">Payments & credits</p>
         </article>
 
-        <article className="rounded-2xl border border-slate-200 bg-white p-4">
-          <p className="text-xs text-slate-500">Total Outstanding</p>
-          <p className="mt-2 text-2xl font-semibold tracking-tight text-rose-600">
+        <article className="rounded-2xl border border-slate-200 bg-white p-3 sm:p-4">
+          <p className="text-[11px] sm:text-xs text-slate-500">Total Due</p>
+          <p className="mt-1 sm:mt-2 text-lg sm:text-2xl font-bold tracking-tight text-rose-600">
             {formatCurrency(summary.totalOutstanding)}
           </p>
-          <p className="mt-1 text-[11px] text-slate-400">Remaining unpaid</p>
+          <p className="mt-0.5 text-[10px] sm:text-[11px] text-slate-400">Remaining unpaid</p>
         </article>
 
-        <article className="rounded-2xl border border-emerald-200/80 bg-emerald-50/40 p-4">
-          <p className="text-xs font-medium text-emerald-800">Fully Paid Residents</p>
-          <p className="mt-2 text-2xl font-semibold tracking-tight text-emerald-700">{summary.fullyPaidResidents}</p>
-          <p className="mt-1 text-[11px] text-emerald-600">Status: Paid</p>
+        <article className="rounded-2xl border border-emerald-200/80 bg-emerald-50/40 p-3 sm:p-4">
+          <p className="text-[11px] sm:text-xs font-medium text-emerald-800">Fully Paid</p>
+          <p className="mt-1 sm:mt-2 text-lg sm:text-2xl font-bold tracking-tight text-emerald-700">{summary.fullyPaidResidents}</p>
+          <p className="mt-0.5 text-[10px] sm:text-[11px] text-emerald-600">Status: Paid</p>
         </article>
 
-        <article className="rounded-2xl border border-amber-200/80 bg-amber-50/40 p-4">
-          <p className="text-xs font-medium text-amber-900">Partially Paid Residents</p>
-          <p className="mt-2 text-2xl font-semibold tracking-tight text-amber-700">{summary.partiallyPaidResidents}</p>
-          <p className="mt-1 text-[11px] text-amber-700">Status: Partially Paid</p>
+        <article className="rounded-2xl border border-amber-200/80 bg-amber-50/40 p-3 sm:p-4">
+          <p className="text-[11px] sm:text-xs font-medium text-amber-900">Partially Paid</p>
+          <p className="mt-1 sm:mt-2 text-lg sm:text-2xl font-bold tracking-tight text-amber-700">{summary.partiallyPaidResidents}</p>
+          <p className="mt-0.5 text-[10px] sm:text-[11px] text-amber-700">Status: Partial</p>
         </article>
 
-        <article className="rounded-2xl border border-rose-200/80 bg-rose-50/40 p-4">
-          <p className="text-xs font-medium text-rose-800">Unpaid Residents</p>
-          <p className="mt-2 text-2xl font-semibold tracking-tight text-rose-700">{summary.unpaidResidents}</p>
-          <p className="mt-1 text-[11px] text-rose-600">Status: Unpaid</p>
+        <article className="rounded-2xl border border-rose-200/80 bg-rose-50/40 p-3 sm:p-4">
+          <p className="text-[11px] sm:text-xs font-medium text-rose-800">Unpaid</p>
+          <p className="mt-1 sm:mt-2 text-lg sm:text-2xl font-bold tracking-tight text-rose-700">{summary.unpaidResidents}</p>
+          <p className="mt-0.5 text-[10px] sm:text-[11px] text-rose-600">Status: Unpaid</p>
         </article>
       </section>
 
       {/* Search and Filters */}
-      <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+      <div className="mt-5 sm:mt-7 flex flex-col gap-2.5 sm:flex-row sm:items-center">
         <label className="relative flex-1">
           <Search aria-hidden="true" className="absolute left-3 top-2.5 size-4 text-slate-400" />
           <input
@@ -627,33 +628,35 @@ export function MonthlyRecordsPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by resident name, room number, or phone..."
-            className="h-10 w-full rounded-md border border-slate-200 bg-white pl-9 pr-3 text-sm outline-none focus:border-slate-400"
+            className="h-9 sm:h-10 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 text-xs sm:text-sm outline-none focus:border-slate-400"
           />
         </label>
-        <select
-          aria-label="Filter bills by floor"
-          value={floorFilter}
-          onChange={(e) => setFloorFilter(e.target.value)}
-          className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm"
-        >
-          <option value="0">All floors</option>
-          {[1, 2, 3, 4, 5].map((f) => (
-            <option key={f} value={f}>
-              Floor {f}
-            </option>
-          ))}
-        </select>
-        <select
-          aria-label="Filter bills by payment status"
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm"
-        >
-          <option value="all">All statuses</option>
-          <option value="paid">Paid</option>
-          <option value="partially_paid">Partially Paid</option>
-          <option value="unpaid">Unpaid</option>
-        </select>
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center shrink-0">
+          <select
+            aria-label="Filter bills by floor"
+            value={floorFilter}
+            onChange={(e) => setFloorFilter(e.target.value)}
+            className="h-9 sm:h-10 rounded-xl border border-slate-200 bg-white px-2.5 sm:px-3 text-xs sm:text-sm"
+          >
+            <option value="0">All floors</option>
+            {[1, 2, 3, 4, 5].map((f) => (
+              <option key={f} value={f}>
+                Floor {f}
+              </option>
+            ))}
+          </select>
+          <select
+            aria-label="Filter bills by payment status"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="h-9 sm:h-10 rounded-xl border border-slate-200 bg-white px-2.5 sm:px-3 text-xs sm:text-sm"
+          >
+            <option value="all">All statuses</option>
+            <option value="paid">Paid</option>
+            <option value="partially_paid">Partially Paid</option>
+            <option value="unpaid">Unpaid</option>
+          </select>
+        </div>
       </div>
 
       {/* Monthly Bills Table */}

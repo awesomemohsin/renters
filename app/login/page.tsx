@@ -50,7 +50,7 @@ function LoginForm() {
   }
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-7 shadow-[0_4px_20px_rgba(15,23,42,0.04)] sm:p-8">
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-8 shadow-xs">
       <div>
         <h2 className="text-lg font-semibold tracking-tight text-slate-900">Sign in to workspace</h2>
         <p className="mt-1 text-xs text-slate-500">
@@ -121,7 +121,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-[#f6f8fb] px-4 py-12 text-slate-950 sm:px-6">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-[#f6f8fb] px-3.5 py-8 text-slate-950 sm:px-6">
       <div className="w-full max-w-md">
         {/* Header branding */}
         <div className="mb-8 flex flex-col items-center text-center">

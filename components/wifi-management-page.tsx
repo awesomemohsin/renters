@@ -406,18 +406,18 @@ export function WiFiManagementPage() {
   }
 
   return (
-    <main className="mx-auto max-w-7xl px-5 py-8 sm:px-8 sm:py-10">
+    <main className="mx-auto max-w-7xl px-3.5 py-5 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
       {/* Header */}
-      <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
+      <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
         <div>
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600">
-            <Wifi aria-hidden="true" className="size-3.5 text-slate-700" />
+          <div className="mb-2.5 inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600">
+            <Wifi aria-hidden="true" className="size-3 text-slate-700" />
             WiFi & Device Registry
           </div>
-          <h2 className="text-3xl font-semibold tracking-[-0.04em] text-slate-950 sm:text-4xl">
+          <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight text-slate-950">
             WiFi Management
           </h2>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+          <p className="mt-1 max-w-2xl text-xs sm:text-sm leading-relaxed text-slate-500">
             Maintain resident WiFi profiles, track registered devices and MAC addresses with building-wide uniqueness,
             and manage per-resident monthly WiFi charges that integrate into monthly bills.
           </p>
@@ -425,7 +425,7 @@ export function WiFiManagementPage() {
       </div>
 
       {notice && (
-        <div className="mt-5 flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs font-medium text-emerald-800">
+        <div className="mt-4 flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50 px-3.5 py-2.5 text-xs font-medium text-emerald-800">
           <span className="inline-flex items-center gap-2">
             <CheckCircle2 className="size-4" /> {notice}
           </span>
@@ -436,91 +436,94 @@ export function WiFiManagementPage() {
       )}
 
       {error && (
-        <div className="mt-5 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs font-medium text-rose-700">
+        <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-2.5 text-xs font-medium text-rose-700">
           {error}
         </div>
       )}
 
       {/* 5 Summary Cards */}
-      <section aria-label="WiFi summary" className="mt-7 grid gap-3.5 sm:grid-cols-2 lg:grid-cols-5">
-        <article className="rounded-2xl border border-slate-200 bg-white p-4">
-          <p className="text-xs text-slate-500">Total Residents Using WiFi</p>
-          <p className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
+      <section aria-label="WiFi summary" className="mt-5 sm:mt-7 grid grid-cols-2 gap-2.5 sm:gap-3.5 sm:grid-cols-3 lg:grid-cols-5">
+        <article className="rounded-2xl border border-slate-200 bg-white p-3 sm:p-4">
+          <p className="text-[11px] sm:text-xs text-slate-500">Residents on WiFi</p>
+          <p className="mt-1 sm:mt-2 text-lg sm:text-2xl font-bold tracking-tight text-slate-950">
             {summary.totalResidentsUsingWiFi}
           </p>
-          <p className="mt-1 text-[11px] text-slate-400">Active resident connections</p>
+          <p className="mt-0.5 text-[10px] sm:text-[11px] text-slate-400">Active connections</p>
         </article>
 
-        <article className="rounded-2xl border border-slate-200 bg-white p-4">
-          <p className="text-xs text-slate-500">Total Registered Devices</p>
-          <p className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
+        <article className="rounded-2xl border border-slate-200 bg-white p-3 sm:p-4">
+          <p className="text-[11px] sm:text-xs text-slate-500">Registered Devices</p>
+          <p className="mt-1 sm:mt-2 text-lg sm:text-2xl font-bold tracking-tight text-slate-950">
             {summary.totalRegisteredDevices}
           </p>
-          <p className="mt-1 text-[11px] text-slate-400">
-            {summary.activeRegisteredDevices} currently active
+          <p className="mt-0.5 text-[10px] sm:text-[11px] text-slate-400">
+            {summary.activeRegisteredDevices} active
           </p>
         </article>
 
-        <article className="rounded-2xl border border-slate-200 bg-white p-4">
-          <p className="text-xs text-slate-500">Active WiFi Connections</p>
-          <p className="mt-2 text-2xl font-semibold tracking-tight text-emerald-700">
+        <article className="rounded-2xl border border-slate-200 bg-white p-3 sm:p-4">
+          <p className="text-[11px] sm:text-xs text-slate-500">Active Connections</p>
+          <p className="mt-1 sm:mt-2 text-lg sm:text-2xl font-bold tracking-tight text-emerald-700">
             {summary.activeWiFiConnections}
           </p>
-          <p className="mt-1 text-[11px] text-slate-400">Active network profiles</p>
+          <p className="mt-0.5 text-[10px] sm:text-[11px] text-slate-400">Active profiles</p>
         </article>
 
-        <article className="rounded-2xl border border-slate-200 bg-white p-4">
-          <p className="text-xs text-slate-500">Total Monthly WiFi Charges</p>
-          <p className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
+        <article className="rounded-2xl border border-slate-200 bg-white p-3 sm:p-4">
+          <p className="text-[11px] sm:text-xs text-slate-500">Monthly WiFi Total</p>
+          <p className="mt-1 sm:mt-2 text-lg sm:text-2xl font-bold tracking-tight text-slate-950">
             {formatCurrency(summary.totalMonthlyWiFiCharges)}
           </p>
-          <p className="mt-1 text-[11px] text-slate-400">Monthly recurring total</p>
+          <p className="mt-0.5 text-[10px] sm:text-[11px] text-slate-400">Monthly recurring</p>
         </article>
 
-        <article className="rounded-2xl border border-slate-200 bg-white p-4">
-          <p className="text-xs text-slate-500">Outstanding WiFi Amount</p>
-          <p className="mt-2 text-2xl font-semibold tracking-tight text-rose-600">
+        <article className="rounded-2xl border border-slate-200 bg-white p-3 sm:p-4">
+          <p className="text-[11px] sm:text-xs text-slate-500">Outstanding WiFi</p>
+          <p className="mt-1 sm:mt-2 text-lg sm:text-2xl font-bold tracking-tight text-rose-600">
             {formatCurrency(summary.outstandingWiFiAmount)}
           </p>
-          <p className="mt-1 text-[11px] text-slate-400">Unpaid across billing history</p>
+          <p className="mt-0.5 text-[10px] sm:text-[11px] text-slate-400">Unpaid dues</p>
         </article>
       </section>
 
       {/* Search and Filters */}
-      <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+      <div className="mt-5 sm:mt-7 flex flex-col gap-2.5 sm:flex-row sm:items-center">
         <label className="relative flex-1">
           <Search aria-hidden="true" className="absolute left-3 top-2.5 size-4 text-slate-400" />
           <input
             aria-label="Search WiFi records"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by resident name, room number, SSID, or MAC address..."
-            className="h-10 w-full rounded-md border border-slate-200 bg-white pl-9 pr-3 text-sm outline-none focus:border-slate-400"
+            placeholder="Search by resident, room, WiFi name, or device MAC..."
+            className="h-9 sm:h-10 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 text-xs sm:text-sm outline-none focus:border-slate-400"
           />
         </label>
-        <select
-          aria-label="Filter by floor"
-          value={floorFilter}
-          onChange={(e) => setFloorFilter(e.target.value)}
-          className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm"
-        >
-          <option value="0">All floors</option>
-          {[1, 2, 3, 4, 5].map((f) => (
-            <option key={f} value={f}>
-              Floor {f}
-            </option>
-          ))}
-        </select>
-        <select
-          aria-label="Filter by status"
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm"
-        >
-          <option value="all">All statuses</option>
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
-        </select>
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center shrink-0">
+          <select
+            aria-label="Filter WiFi by floor"
+            value={floorFilter}
+            onChange={(e) => setFloorFilter(e.target.value)}
+            className="h-9 sm:h-10 rounded-xl border border-slate-200 bg-white px-2.5 sm:px-3 text-xs sm:text-sm"
+          >
+            <option value="0">All floors</option>
+            {[1, 2, 3, 4, 5].map((f) => (
+              <option key={f} value={f}>
+                Floor {f}
+              </option>
+            ))}
+          </select>
+          <select
+            aria-label="Filter WiFi by connection status"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="h-9 sm:h-10 rounded-xl border border-slate-200 bg-white px-2.5 sm:px-3 text-xs sm:text-sm"
+          >
+            <option value="all">All statuses</option>
+            <option value="active">Active Connections</option>
+            <option value="inactive">Inactive / No WiFi</option>
+            <option value="has_due">Has Outstanding Dues</option>
+          </select>
+        </div>
       </div>
 
       {/* WiFi Table */}

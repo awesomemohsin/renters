@@ -184,92 +184,95 @@ export function ResidentsPage() {
   ]
 
   return (
-    <main className="mx-auto max-w-7xl px-5 py-8 sm:px-8 sm:py-10">
-      <div className="flex flex-col justify-between gap-5 md:flex-row md:items-end">
+    <main className="mx-auto max-w-7xl px-3.5 py-5 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
+      <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600">
-            <UserRound aria-hidden="true" className="size-3.5" /> Resident management
+          <div className="mb-2.5 inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600">
+            <UserRound aria-hidden="true" className="size-3 text-slate-700" /> Resident management
           </div>
-          <h2 className="text-3xl font-semibold tracking-[-0.04em] sm:text-4xl">People, not paperwork.</h2>
-          <p className="mt-3 max-w-xl text-sm leading-6 text-slate-500 sm:text-base">
+          <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight text-slate-950">People, not paperwork.</h2>
+          <p className="mt-1 max-w-xl text-xs sm:text-sm leading-relaxed text-slate-500">
             Keep resident details connected to the room they call home, view current monthly dues at a glance, and
             collect payments directly.
           </p>
         </div>
         <Button
+          className="w-full sm:w-auto shrink-0"
           onClick={() => {
             setOpen(true)
             setError('')
           }}
         >
-          <UserPlus data-icon="inline-start" /> Add new resident
+          <UserPlus data-icon="inline-start" className="size-4" /> Add new resident
         </Button>
       </div>
 
-      <section aria-label="Resident summary" className="mt-9 grid gap-4 sm:grid-cols-3">
+      <section aria-label="Resident summary" className="mt-5 sm:mt-7 grid grid-cols-3 gap-2 sm:gap-4">
         {summaryItems.map(([label, value, detail]) => (
-          <article key={label} className="rounded-2xl border border-slate-200 bg-white p-5">
-            <p className="text-sm text-slate-500">{label}</p>
-            <p className="mt-2 text-3xl font-semibold tracking-tight">{value}</p>
-            <p className="mt-1 text-xs text-slate-400">{detail}</p>
+          <article key={label} className="rounded-2xl border border-slate-200 bg-white p-3 sm:p-5">
+            <p className="text-[11px] sm:text-sm text-slate-500 truncate">{label}</p>
+            <p className="mt-1 sm:mt-2 text-lg sm:text-3xl font-bold tracking-tight text-slate-950">{value}</p>
+            <p className="mt-0.5 text-[10px] sm:text-xs text-slate-400 truncate">{detail}</p>
           </article>
         ))}
       </section>
 
-      <div className="mt-8 flex flex-col gap-3 lg:flex-row">
+      <div className="mt-5 sm:mt-7 flex flex-col gap-2.5 sm:flex-row sm:items-center">
         <label className="relative flex-1">
           <Search aria-hidden="true" className="absolute left-3 top-2.5 size-4 text-slate-400" />
           <input
             aria-label="Search residents"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by name or phone"
-            className="h-10 w-full rounded-md border border-slate-200 bg-white pl-9 pr-3 text-sm outline-none focus:border-slate-400"
+            placeholder="Search by name or phone..."
+            className="h-9 sm:h-10 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 text-xs sm:text-sm outline-none focus:border-slate-400"
           />
         </label>
-        <select
-          aria-label="Filter by floor"
-          value={floor}
-          onChange={(e) => setFloor(e.target.value)}
-          className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm"
-        >
-          <option value="0">All floors</option>
-          {[1, 2, 3, 4, 5].map((f) => (
-            <option key={f} value={f}>
-              Floor {f}
-            </option>
-          ))}
-        </select>
-        <select
-          aria-label="Filter by status"
-          value={status}
-          onChange={(e) => setStatus(e.target.value)}
-          className="h-10 rounded-md border border-slate-200 bg-white px-3 text-sm"
-        >
-          <option value="all">All statuses</option>
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
-        </select>
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center shrink-0">
+          <select
+            aria-label="Filter by floor"
+            value={floor}
+            onChange={(e) => setFloor(e.target.value)}
+            className="h-9 sm:h-10 rounded-xl border border-slate-200 bg-white px-2.5 sm:px-3 text-xs sm:text-sm"
+          >
+            <option value="0">All floors</option>
+            {[1, 2, 3, 4, 5].map((f) => (
+              <option key={f} value={f}>
+                Floor {f}
+              </option>
+            ))}
+          </select>
+          <select
+            aria-label="Filter by status"
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+            className="h-9 sm:h-10 rounded-xl border border-slate-200 bg-white px-2.5 sm:px-3 text-xs sm:text-sm"
+          >
+            <option value="all">All statuses</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
       </div>
 
-      {error && !open && <p className="mt-4 text-sm text-red-600">{error}</p>}
+      {error && !open && <p className="mt-3 text-xs sm:text-sm text-red-600">{error}</p>}
 
-      <div className="mt-5 overflow-hidden rounded-2xl border border-slate-200 bg-white">
+      <div className="mt-4 sm:mt-5 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1100px] text-left text-sm">
-            <thead className="border-b border-slate-100 bg-slate-50 text-xs uppercase tracking-wide text-slate-400">
+          <table className="w-full min-w-[1000px] text-left text-xs sm:text-sm">
+            <thead className="border-b border-slate-100 bg-slate-50 text-[11px] sm:text-xs uppercase tracking-wide text-slate-400">
               <tr>
-                <th className="px-4 py-4">Room</th>
-                <th className="px-4 py-4">Resident name</th>
-                <th className="px-4 py-4">Monthly rent</th>
-                <th className="px-4 py-4">Electricity due</th>
-                <th className="px-4 py-4">WiFi due</th>
-                <th className="px-4 py-4">Prev. outstanding</th>
-                <th className="px-4 py-4">Total payable</th>
-                <th className="px-4 py-4">Total paid</th>
-                <th className="px-4 py-4">Remaining due</th>
-                <th className="px-4 py-4">Status</th>
-                <th className="px-4 py-4 text-right">Actions</th>
+                <th className="px-3.5 py-3">Room</th>
+                <th className="px-3.5 py-3">Resident name</th>
+                <th className="px-3.5 py-3">Monthly rent</th>
+                <th className="px-3.5 py-3">Electricity due</th>
+                <th className="px-3.5 py-3">WiFi due</th>
+                <th className="px-3.5 py-3">Prev. outstanding</th>
+                <th className="px-3.5 py-3">Total payable</th>
+                <th className="px-3.5 py-3">Total paid</th>
+                <th className="px-3.5 py-3">Remaining due</th>
+                <th className="px-3.5 py-3">Status</th>
+                <th className="px-3.5 py-3 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -277,33 +280,33 @@ export function ResidentsPage() {
                 const bs = resident.billingSummary
                 return (
                   <tr key={resident._id} className="hover:bg-slate-50">
-                    <td className="px-4 py-4 font-medium text-slate-800">
+                    <td className="px-3.5 py-3 font-medium text-slate-800">
                       {resident.roomId
                         ? `Room ${formatRoomNumber(resident.roomId.roomNumber)}${
                             resident.status === 'inactive' ? ' (Vacated)' : ''
                           }`
                         : 'Vacated'}
-                      <p className="mt-0.5 text-xs font-normal text-slate-400">
+                      <p className="mt-0.5 text-[11px] font-normal text-slate-400">
                         {resident.roomId ? `Floor ${resident.roomId.floor}` : '—'}
                       </p>
                     </td>
-                    <td className="px-4 py-4">
+                    <td className="px-3.5 py-3">
                       <Link href={`/residents/${resident._id}`} className="font-medium text-slate-900 hover:underline">
                         {resident.fullName}
                       </Link>
-                      <p className="mt-0.5 text-xs text-slate-400">
+                      <p className="mt-0.5 text-[11px] text-slate-400">
                         {resident.phone}
                         {bs ? ` · Bill ${bs.billingMonth}` : ''}
                       </p>
                     </td>
-                    <td className="px-4 py-4 text-slate-700">{formatCurrency(resident.monthlyRent)}</td>
-                    <td className="px-4 py-4 text-slate-700">
+                    <td className="px-3.5 py-3 text-slate-700">{formatCurrency(resident.monthlyRent)}</td>
+                    <td className="px-3.5 py-3 text-slate-700">
                       {bs ? formatCurrency(bs.electricityDue) : <span className="text-slate-400">—</span>}
                     </td>
-                    <td className="px-4 py-4 text-slate-700">
+                    <td className="px-3.5 py-3 text-slate-700">
                       {bs ? formatCurrency(bs.wifiDue) : formatCurrency(resident.wifiCharge ?? 0)}
                     </td>
-                    <td className="px-4 py-4 text-slate-700">
+                    <td className="px-3.5 py-3 text-slate-700">
                       {bs ? (
                         <span className={bs.previousOutstanding > 0 ? 'font-medium text-amber-700' : 'text-slate-500'}>
                           {formatCurrency(bs.previousOutstanding)}
@@ -312,22 +315,22 @@ export function ResidentsPage() {
                         <span className="text-slate-400">—</span>
                       )}
                     </td>
-                    <td className="px-4 py-4 font-semibold text-slate-900">
+                    <td className="px-3.5 py-3 font-semibold text-slate-900">
                       {bs ? formatCurrency(bs.totalPayable) : <span className="font-normal text-slate-400">No bill</span>}
                     </td>
-                    <td className="px-4 py-4 font-medium text-emerald-700">
+                    <td className="px-3.5 py-3 font-medium text-emerald-700">
                       {bs ? formatCurrency(bs.totalPaid) : <span className="font-normal text-slate-400">—</span>}
                     </td>
-                    <td className="px-4 py-4 font-semibold text-rose-600">
+                    <td className="px-3.5 py-3 font-semibold text-rose-600">
                       {bs ? formatCurrency(bs.remainingDue) : <span className="font-normal text-slate-400">—</span>}
                     </td>
-                    <td className="px-4 py-4">
-                      <span className={resident.status === 'active' ? 'text-emerald-600' : 'text-slate-400'}>
+                    <td className="px-3.5 py-3">
+                      <span className={resident.status === 'active' ? 'text-emerald-600 font-medium' : 'text-slate-400'}>
                         {resident.status === 'active' ? 'Active' : 'Inactive'}
                       </span>
                     </td>
-                    <td className="px-4 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
+                    <td className="px-3.5 py-3 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
                         {bs && !bs.isLocked && (
                           <Button size="xs" onClick={() => openQuickCollect(resident)}>
                             <CreditCard className="size-3" /> Collect
@@ -335,7 +338,7 @@ export function ResidentsPage() {
                         )}
                         <Link
                           href={`/residents/${resident._id}`}
-                          className="text-xs font-medium text-slate-500 hover:text-slate-900"
+                          className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-700 shadow-xs hover:bg-slate-50 hover:text-slate-900"
                         >
                           Profile
                         </Link>
@@ -346,7 +349,7 @@ export function ResidentsPage() {
               })}
               {residents.length === 0 && (
                 <tr>
-                  <td colSpan={11} className="px-5 py-14 text-center text-sm text-slate-500">
+                  <td colSpan={11} className="px-5 py-12 text-center text-xs sm:text-sm text-slate-500">
                     No residents found.
                   </td>
                 </tr>
@@ -357,17 +360,17 @@ export function ResidentsPage() {
       </div>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto bg-slate-950/30 p-4 sm:items-center">
+        <div className="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto bg-slate-950/30 p-2 sm:p-4 sm:items-center">
           <div
             role="dialog"
             aria-modal="true"
             aria-labelledby="add-resident-title"
-            className="my-8 w-full max-w-3xl rounded-2xl bg-white p-6 shadow-xl sm:p-8"
+            className="my-auto w-full max-w-3xl max-h-[92vh] overflow-y-auto rounded-2xl bg-white p-4 sm:p-6 lg:p-8 shadow-xl"
           >
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm text-slate-500">Resident record</p>
-                <h3 id="add-resident-title" className="text-2xl font-semibold">
+                <p className="text-xs text-slate-500">Resident record</p>
+                <h3 id="add-resident-title" className="text-lg sm:text-2xl font-bold tracking-tight text-slate-950">
                   Add new resident
                 </h3>
               </div>
@@ -375,29 +378,29 @@ export function ResidentsPage() {
                 <X />
               </Button>
             </div>
-            <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-800">
-              Document uploads are unavailable until a storage provider is configured. You can add the resident details now.
+            <p className="mt-2.5 rounded-xl bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-800">
+              Document uploads are available via Vercel Blob. You can also save resident details directly.
             </p>
-            <form onSubmit={submit} className="mt-6 grid gap-4 sm:grid-cols-2">
+            <form onSubmit={submit} className="mt-4 sm:mt-6 grid gap-3 sm:gap-4 sm:grid-cols-2">
               {formFields.map(([key, label]) => (
-                <label key={key} className="flex flex-col gap-2 text-sm font-medium">
+                <label key={key} className="flex flex-col gap-1.5 text-xs sm:text-sm font-medium text-slate-700">
                   {label}
                   <input
                     required={key === 'fullName' || key === 'phone' || key === 'moveInDate'}
                     type={key === 'moveInDate' || key === 'dateOfBirth' ? 'date' : 'text'}
                     value={form[key]}
                     onChange={(e) => update(key, e.target.value)}
-                    className="h-10 rounded-md border border-slate-200 px-3 font-normal"
+                    className="h-9 sm:h-10 rounded-xl border border-slate-200 px-3 text-xs sm:text-sm font-normal"
                   />
                 </label>
               ))}
-              <label className="flex flex-col gap-2 text-sm font-medium">
+              <label className="flex flex-col gap-1.5 text-xs sm:text-sm font-medium text-slate-700">
                 Room number *
                 <select
                   required
                   value={form.roomId}
                   onChange={(e) => selectRoom(e.target.value)}
-                  className="h-10 rounded-md border border-slate-200 bg-white px-3 font-normal"
+                  className="h-9 sm:h-10 rounded-xl border border-slate-200 bg-white px-3 text-xs sm:text-sm font-normal"
                 >
                   <option value="">Select vacant room</option>
                   {available.map((room) => (
@@ -408,7 +411,7 @@ export function ResidentsPage() {
                   ))}
                 </select>
               </label>
-              <label className="flex flex-col gap-2 text-sm font-medium">
+              <label className="flex flex-col gap-1.5 text-xs sm:text-sm font-medium text-slate-700">
                 Monthly rent *
                 <input
                   required
@@ -416,10 +419,10 @@ export function ResidentsPage() {
                   type="number"
                   value={form.monthlyRent}
                   onChange={(e) => update('monthlyRent', e.target.value)}
-                  className="h-10 rounded-md border border-slate-200 px-3 font-normal"
+                  className="h-9 sm:h-10 rounded-xl border border-slate-200 px-3 text-xs sm:text-sm font-normal"
                 />
               </label>
-              <label className="flex flex-col gap-2 text-sm font-medium">
+              <label className="flex flex-col gap-1.5 text-xs sm:text-sm font-medium text-slate-700">
                 Monthly WiFi charge (optional)
                 <input
                   min="0"
@@ -427,29 +430,29 @@ export function ResidentsPage() {
                   value={form.wifiCharge}
                   onChange={(e) => update('wifiCharge', e.target.value)}
                   placeholder="0"
-                  className="h-10 rounded-md border border-slate-200 px-3 font-normal"
+                  className="h-9 sm:h-10 rounded-xl border border-slate-200 px-3 text-xs sm:text-sm font-normal"
                 />
               </label>
-              <label className="flex flex-col gap-2 text-sm font-medium">
+              <label className="flex flex-col gap-1.5 text-xs sm:text-sm font-medium text-slate-700">
                 Security deposit
                 <input
                   min="0"
                   type="number"
                   value={form.securityDeposit}
                   onChange={(e) => update('securityDeposit', e.target.value)}
-                  className="h-10 rounded-md border border-slate-200 px-3 font-normal"
+                  className="h-9 sm:h-10 rounded-xl border border-slate-200 px-3 text-xs sm:text-sm font-normal"
                 />
               </label>
-              {error && <p className="sm:col-span-2 text-sm text-red-600">{error}</p>}
-              <div className="sm:col-span-2 flex items-center justify-between gap-3 border-t border-slate-100 pt-5">
-                <span className="text-xs text-slate-400">
+              {error && <p className="sm:col-span-2 text-xs sm:text-sm text-red-600">{error}</p>}
+              <div className="sm:col-span-2 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-slate-100 pt-4">
+                <span className="text-[11px] sm:text-xs text-slate-400 text-center sm:text-left">
                   {selectedRoom
                     ? `Floor ${selectedRoom.floor} · Room ${formatRoomNumber(selectedRoom.roomNumber)} available${
                         selectedRoom.monthlyRent != null ? ` · Default rent ${formatCurrency(selectedRoom.monthlyRent)}` : ''
                       }`
                     : 'Room floor appears after selection.'}
                 </span>
-                <Button type="submit" disabled={saving}>
+                <Button type="submit" disabled={saving} className="w-full sm:w-auto">
                   {saving ? 'Saving...' : 'Save resident'}
                 </Button>
               </div>

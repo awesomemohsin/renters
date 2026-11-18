@@ -280,61 +280,61 @@ export function ReportsPage() {
   }
 
   return (
-    <div className="space-y-6 print:m-0 print:p-0">
+    <div className="space-y-5 sm:space-y-6 print:m-0 print:p-0">
       {/* Top Header & Global Actions */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b pb-4">
+      <div className="flex flex-col gap-3.5 sm:flex-row sm:items-center sm:justify-between border-b pb-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
-            <BarChart3 className="h-6 w-6 text-primary" />
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
+            <BarChart3 className="size-5 sm:size-6 text-primary shrink-0" />
             Financial Reports & Analytics
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="mt-0.5 text-xs sm:text-sm text-muted-foreground">
             Complete financial visibility across rent, electricity, WiFi, collections, and dues.
           </p>
         </div>
 
-        <div className="flex items-center gap-2 print:hidden">
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center shrink-0 print:hidden">
           <Button
             variant="outline"
             size="sm"
             onClick={fetchReports}
             disabled={loading}
-            className="flex items-center gap-1.5"
+            className="flex items-center justify-center gap-1.5 text-xs sm:text-sm"
           >
-            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
           <Button
             variant="outline"
             size="sm"
             onClick={handlePrint}
-            className="flex items-center gap-1.5"
+            className="flex items-center justify-center gap-1.5 text-xs sm:text-sm"
           >
-            <Printer className="h-4 w-4" />
+            <Printer className="h-3.5 w-3.5" />
             Print Report
           </Button>
         </div>
       </div>
 
       {/* Global Filter Bar */}
-      <div className="bg-card border rounded-lg p-4 shadow-sm space-y-3 print:hidden">
-        <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-          <Filter className="h-3.5 w-3.5" />
+      <div className="bg-card border rounded-2xl p-3 sm:p-4 shadow-xs space-y-2.5 print:hidden">
+        <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+          <Filter className="size-3" />
           Filter Records
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
           {/* Month Filter */}
           <div>
-            <label className="block text-xs font-medium text-muted-foreground mb-1">
+            <label className="block text-[11px] sm:text-xs font-medium text-muted-foreground mb-1">
               Billing Month
             </label>
             <select
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
-              className="w-full bg-background border border-input rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+              className="w-full h-9 bg-background border border-input rounded-xl px-2.5 sm:px-3 text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-primary"
             >
-              <option value="all">All Available Months</option>
+              <option value="all">All Months</option>
               {data?.availableMonths?.map((m) => (
                 <option key={m} value={m}>
                   {m}
@@ -345,11 +345,11 @@ export function ReportsPage() {
 
           {/* Floor Filter */}
           <div>
-            <label className="block text-xs font-medium text-muted-foreground mb-1">Floor</label>
+            <label className="block text-[11px] sm:text-xs font-medium text-muted-foreground mb-1">Floor</label>
             <select
               value={selectedFloor}
               onChange={(e) => setSelectedFloor(e.target.value)}
-              className="w-full bg-background border border-input rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+              className="w-full h-9 bg-background border border-input rounded-xl px-2.5 sm:px-3 text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-primary"
             >
               <option value="all">All Floors (1 - 5)</option>
               {[1, 2, 3, 4, 5].map((fl) => (
@@ -362,11 +362,11 @@ export function ReportsPage() {
 
           {/* Room Filter */}
           <div>
-            <label className="block text-xs font-medium text-muted-foreground mb-1">Room</label>
+            <label className="block text-[11px] sm:text-xs font-medium text-muted-foreground mb-1">Room</label>
             <select
               value={selectedRoom}
               onChange={(e) => setSelectedRoom(e.target.value)}
-              className="w-full bg-background border border-input rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+              className="w-full h-9 bg-background border border-input rounded-xl px-2.5 sm:px-3 text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-primary"
             >
               <option value="all">All 26 Rooms</option>
               {Array.from({ length: 26 }, (_, i) => i + 1).map((rn) => (
@@ -379,17 +379,17 @@ export function ReportsPage() {
 
           {/* Search Query */}
           <div>
-            <label className="block text-xs font-medium text-muted-foreground mb-1">
-              Search by Resident / Phone
+            <label className="block text-[11px] sm:text-xs font-medium text-muted-foreground mb-1">
+              Search Resident / Phone
             </label>
             <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+              <Search className="absolute left-2.5 top-2.5 size-3.5 text-muted-foreground" />
               <input
                 type="text"
                 placeholder="Name, room, phone..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-background border border-input rounded-md pl-8 pr-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                className="w-full h-9 bg-background border border-input rounded-xl pl-8 pr-2.5 sm:pr-3 text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-primary"
               />
             </div>
           </div>
@@ -397,123 +397,122 @@ export function ReportsPage() {
       </div>
 
       {error && (
-        <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm flex items-center gap-2">
+        <div className="p-3.5 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-xs sm:text-sm flex items-center gap-2">
           <AlertTriangle className="h-4 w-4 shrink-0" />
           {error}
         </div>
       )}
 
       {/* PART B: 8 CORE KPI SUMMARY CARDS */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-4">
         {/* 1. Monthly Rent Collection */}
-        <div className="bg-card border rounded-lg p-4 shadow-sm">
-          <div className="flex items-center justify-between text-muted-foreground mb-2">
-            <span className="text-xs font-medium">Rent Collection</span>
-            <DollarSign className="h-4 w-4 text-emerald-500" />
+        <div className="bg-card border rounded-2xl p-3 sm:p-4 shadow-xs">
+          <div className="flex items-center justify-between text-muted-foreground mb-1 sm:mb-2">
+            <span className="text-[11px] sm:text-xs font-medium">Rent Collection</span>
+            <DollarSign className="size-3.5 sm:size-4 text-emerald-500" />
           </div>
-          <div className="text-xl font-bold text-foreground">
+          <div className="text-base sm:text-xl font-bold text-foreground">
             {formatCurrency(data?.summary.monthlyRentCollection ?? 0)}
           </div>
-          <div className="text-xs text-muted-foreground mt-1">Paid on rent charges</div>
+          <div className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 sm:mt-1">Paid on rent</div>
         </div>
 
         {/* 2. Monthly Electricity Collection */}
-        <div className="bg-card border rounded-lg p-4 shadow-sm">
-          <div className="flex items-center justify-between text-muted-foreground mb-2">
-            <span className="text-xs font-medium">Electricity Collection</span>
-            <Zap className="h-4 w-4 text-amber-500" />
+        <div className="bg-card border rounded-2xl p-3 sm:p-4 shadow-xs">
+          <div className="flex items-center justify-between text-muted-foreground mb-1 sm:mb-2">
+            <span className="text-[11px] sm:text-xs font-medium">Electricity</span>
+            <Zap className="size-3.5 sm:size-4 text-amber-500" />
           </div>
-          <div className="text-xl font-bold text-foreground">
+          <div className="text-base sm:text-xl font-bold text-foreground">
             {formatCurrency(data?.summary.monthlyElectricityCollection ?? 0)}
           </div>
-          <div className="text-xs text-muted-foreground mt-1">Meter share & surcharge</div>
+          <div className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 sm:mt-1">Meter & surcharge</div>
         </div>
 
         {/* 3. Monthly WiFi Collection */}
-        <div className="bg-card border rounded-lg p-4 shadow-sm">
-          <div className="flex items-center justify-between text-muted-foreground mb-2">
-            <span className="text-xs font-medium">WiFi Collection</span>
-            <Wifi className="h-4 w-4 text-sky-500" />
+        <div className="bg-card border rounded-2xl p-3 sm:p-4 shadow-xs">
+          <div className="flex items-center justify-between text-muted-foreground mb-1 sm:mb-2">
+            <span className="text-[11px] sm:text-xs font-medium">WiFi Collection</span>
+            <Wifi className="size-3.5 sm:size-4 text-sky-500" />
           </div>
-          <div className="text-xl font-bold text-foreground">
+          <div className="text-base sm:text-xl font-bold text-foreground">
             {formatCurrency(data?.summary.monthlyWifiCollection ?? 0)}
           </div>
-          <div className="text-xs text-muted-foreground mt-1">Paid on active WiFi</div>
+          <div className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 sm:mt-1">Paid on WiFi</div>
         </div>
 
         {/* 4. Total Amount Billed */}
-        <div className="bg-card border rounded-lg p-4 shadow-sm">
-          <div className="flex items-center justify-between text-muted-foreground mb-2">
-            <span className="text-xs font-medium">Total Billed</span>
-            <Layers className="h-4 w-4 text-primary" />
+        <div className="bg-card border rounded-2xl p-3 sm:p-4 shadow-xs">
+          <div className="flex items-center justify-between text-muted-foreground mb-1 sm:mb-2">
+            <span className="text-[11px] sm:text-xs font-medium">Total Billed</span>
+            <Layers className="size-3.5 sm:size-4 text-primary" />
           </div>
-          <div className="text-xl font-bold text-foreground">
+          <div className="text-base sm:text-xl font-bold text-foreground">
             {formatCurrency(data?.summary.totalAmountBilled ?? 0)}
           </div>
-          <div className="text-xs text-muted-foreground mt-1">
-            {data?.summary.totalBillsCount ?? 0} total invoices
+          <div className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 sm:mt-1">
+            {data?.summary.totalBillsCount ?? 0} invoices
           </div>
         </div>
 
         {/* 5. Total Amount Collected */}
-        <div className="bg-card border rounded-lg p-4 shadow-sm">
-          <div className="flex items-center justify-between text-muted-foreground mb-2">
-            <span className="text-xs font-medium">Total Collected</span>
-            <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+        <div className="bg-card border rounded-2xl p-3 sm:p-4 shadow-xs">
+          <div className="flex items-center justify-between text-muted-foreground mb-1 sm:mb-2">
+            <span className="text-[11px] sm:text-xs font-medium">Total Collected</span>
+            <CheckCircle2 className="size-3.5 sm:size-4 text-emerald-500" />
           </div>
-          <div className="text-xl font-bold text-emerald-600">
+          <div className="text-base sm:text-xl font-bold text-emerald-600">
             {formatCurrency(data?.summary.totalAmountCollected ?? 0)}
           </div>
-          <div className="text-xs text-muted-foreground mt-1">
-            {data?.summary.paidBillsCount ?? 0} fully paid bills
+          <div className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 sm:mt-1">
+            {data?.summary.paidBillsCount ?? 0} paid bills
           </div>
         </div>
 
         {/* 6. Total Outstanding Due */}
-        <div className="bg-card border rounded-lg p-4 shadow-sm">
-          <div className="flex items-center justify-between text-muted-foreground mb-2">
-            <span className="text-xs font-medium">Total Outstanding</span>
-            <AlertTriangle className="h-4 w-4 text-rose-500" />
+        <div className="bg-card border rounded-2xl p-3 sm:p-4 shadow-xs">
+          <div className="flex items-center justify-between text-muted-foreground mb-1 sm:mb-2">
+            <span className="text-[11px] sm:text-xs font-medium">Total Outstanding</span>
+            <AlertTriangle className="size-3.5 sm:size-4 text-rose-500" />
           </div>
-          <div className="text-xl font-bold text-rose-600">
+          <div className="text-base sm:text-xl font-bold text-rose-600">
             {formatCurrency(data?.summary.totalOutstandingDue ?? 0)}
           </div>
-          <div className="text-xs text-muted-foreground mt-1">
-            {data?.summary.unpaidBillsCount ?? 0} unpaid /{' '}
-            {data?.summary.partiallyPaidBillsCount ?? 0} partial
+          <div className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 sm:mt-1">
+            {data?.summary.unpaidBillsCount ?? 0} unpaid / {data?.summary.partiallyPaidBillsCount ?? 0} partial
           </div>
         </div>
 
         {/* 7. Previous Month Outstanding */}
-        <div className="bg-card border rounded-lg p-4 shadow-sm">
-          <div className="flex items-center justify-between text-muted-foreground mb-2">
-            <span className="text-xs font-medium">Carried Dues</span>
-            <Clock className="h-4 w-4 text-orange-500" />
+        <div className="bg-card border rounded-2xl p-3 sm:p-4 shadow-xs">
+          <div className="flex items-center justify-between text-muted-foreground mb-1 sm:mb-2">
+            <span className="text-[11px] sm:text-xs font-medium">Carried Dues</span>
+            <Clock className="size-3.5 sm:size-4 text-orange-500" />
           </div>
-          <div className="text-xl font-bold text-orange-600">
+          <div className="text-base sm:text-xl font-bold text-orange-600">
             {formatCurrency(data?.summary.previousMonthOutstanding ?? 0)}
           </div>
-          <div className="text-xs text-muted-foreground mt-1">Billed from prior months</div>
+          <div className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 sm:mt-1">From prior months</div>
         </div>
 
         {/* 8. Current Collection Rate */}
-        <div className="bg-card border rounded-lg p-4 shadow-sm">
-          <div className="flex items-center justify-between text-muted-foreground mb-2">
-            <span className="text-xs font-medium">Collection Rate</span>
-            <TrendingUp className="h-4 w-4 text-blue-500" />
+        <div className="bg-card border rounded-2xl p-3 sm:p-4 shadow-xs">
+          <div className="flex items-center justify-between text-muted-foreground mb-1 sm:mb-2">
+            <span className="text-[11px] sm:text-xs font-medium">Collection Rate</span>
+            <TrendingUp className="size-3.5 sm:size-4 text-blue-500" />
           </div>
-          <div className="text-xl font-bold text-foreground">
+          <div className="text-base sm:text-xl font-bold text-foreground">
             {data?.summary.collectionRate ?? 0}%
           </div>
-          <div className="text-xs text-muted-foreground mt-1">
+          <div className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 sm:mt-1">
             {data?.summary.collectionRate ?? 0 >= 80 ? 'Good pacing' : 'Action needed'}
           </div>
         </div>
       </div>
 
       {/* PART C: NAVIGATION TABS */}
-      <div className="border-b border-border print:hidden">
-        <nav className="flex space-x-1 sm:space-x-4 overflow-x-auto pb-1 text-sm font-medium">
+      <div className="border-b border-border print:hidden overflow-x-auto scrollbar-none">
+        <nav className="flex space-x-1 sm:space-x-3 pb-1 text-xs sm:text-sm font-medium">
           {[
             { id: 'income', label: 'Income & Collections', icon: TrendingUp },
             { id: 'residents', label: 'Resident Balances', icon: User },
@@ -530,13 +529,13 @@ export function ReportsPage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as TabType)}
-                className={`flex items-center gap-1.5 px-3 py-2 border-b-2 whitespace-nowrap transition-colors ${
+                className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border-b-2 whitespace-nowrap transition-colors ${
                   isActive
                     ? 'border-primary text-primary font-semibold'
                     : 'border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground/30'
                 }`}
               >
-                <Icon className="h-4 w-4" />
+                <Icon className="size-3.5 sm:size-4 shrink-0" />
                 {tab.label}
               </button>
             )

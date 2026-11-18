@@ -133,62 +133,81 @@ export function RentersShell({
       </aside>
 
       <div className="lg:pl-64">
-        <header className="flex h-20 items-center justify-between border-b border-slate-200 bg-white/90 px-5 backdrop-blur sm:px-8">
-          <div>
-            <p className="text-xs font-medium text-slate-500">Property management</p>
-            <h1 className="text-lg font-semibold tracking-tight">{headerTitle}</h1>
+        {/* Top Header */}
+        <header className="sticky top-0 z-30 flex flex-col border-b border-slate-200/90 bg-white/95 backdrop-blur-md">
+          <div className="flex h-14 sm:h-16 lg:h-20 items-center justify-between px-3.5 sm:px-6 lg:px-8">
+            <div className="flex items-center gap-2.5">
+              <div className="flex size-7 sm:size-8 items-center justify-center rounded-lg bg-slate-950 text-white lg:hidden">
+                <Building2 aria-hidden="true" className="size-4" />
+              </div>
+              <div>
+                <p className="text-[10px] sm:text-xs font-medium text-slate-500 uppercase tracking-wider hidden sm:block">
+                  Property management
+                </p>
+                <h1 className="text-sm sm:text-base lg:text-lg font-bold tracking-tight text-slate-900 truncate max-w-[200px] sm:max-w-none">
+                  {headerTitle}
+                </h1>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <SignOutButton className="p-1.5 sm:px-3 text-xs" />
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <nav aria-label="Mobile navigation" className="flex items-center gap-1 lg:hidden">
+
+          {/* Mobile & Tablet Horizontal Scroll Navigation */}
+          <div className="flex lg:hidden overflow-x-auto border-t border-slate-100 px-3 py-1.5 scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none]">
+            <nav aria-label="Mobile navigation" className="flex items-center gap-1.5 shrink-0">
               {navigation
                 .filter((item): item is NavItem & { href: string } => Boolean(item.href))
                 .map((item) => {
                   const isActive = item.href === currentPath
+                  const Icon = item.icon
                   return (
                     <Link
                       key={item.label}
                       href={item.href}
                       aria-current={isActive ? 'page' : undefined}
-                      className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-                        isActive ? 'bg-slate-950 text-white' : 'text-slate-600 hover:bg-slate-100'
+                      className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold whitespace-nowrap transition-colors ${
+                        isActive
+                          ? 'bg-slate-950 text-white shadow-xs'
+                          : 'bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-slate-200/60'
                       }`}
                     >
-                      {item.label}
+                      <Icon className="size-3.5" />
+                      <span>{item.label}</span>
                     </Link>
                   )
                 })}
             </nav>
-            <div className="lg:hidden">
-              <SignOutButton className="p-1.5" />
-            </div>
           </div>
         </header>
 
         {children ?? (
-          <main className="mx-auto max-w-7xl px-5 py-8 sm:px-8 sm:py-10">
-            <section className="flex flex-col justify-between gap-5 md:flex-row md:items-end">
+          <main className="mx-auto max-w-7xl px-3.5 py-5 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
+            <section className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
               <div>
-                <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600">
+                <div className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600">
                   <span className="size-1.5 rounded-full bg-emerald-500" />
                   Foundation ready
                 </div>
-                <h2 className="max-w-xl text-3xl font-semibold tracking-[-0.04em] text-slate-950 sm:text-4xl">
+                <h2 className="max-w-xl text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight text-slate-950">
                   A clearer way to run your building.
                 </h2>
-                <p className="mt-3 max-w-xl text-sm leading-6 text-slate-500 sm:text-base">
+                <p className="mt-2 max-w-xl text-xs sm:text-sm leading-relaxed text-slate-500">
                   Renters is the private workspace for keeping rooms, residents, utilities, and monthly records organized in one place.
                 </p>
               </div>
               <Link
                 href="/residents"
-                className="inline-flex h-8 w-fit items-center gap-1.5 rounded-lg bg-slate-950 px-3 text-sm font-medium text-white transition-colors hover:bg-slate-800"
+                className="inline-flex h-8 w-fit items-center gap-1.5 rounded-lg bg-slate-950 px-3 text-xs sm:text-sm font-semibold text-white transition-colors hover:bg-slate-800"
               >
                 Manage residents
-                <ArrowUpRight aria-hidden="true" className="size-4" />
+                <ArrowUpRight aria-hidden="true" className="size-3.5" />
               </Link>
             </section>
 
-            <section aria-label="Building foundation summary" className="mt-9 grid gap-4 md:grid-cols-3">
+            <section aria-label="Building foundation summary" className="mt-6 sm:mt-9 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
               {foundationCards.map((card) => {
                 const Icon = card.icon
                 return (

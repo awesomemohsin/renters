@@ -728,31 +728,33 @@ export function DashboardPage() {
       {/* ----------------- Top Header & Month Bar ----------------- */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <div className="inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-800 border border-amber-200/60 mb-2">
-            <Sparkles className="size-3.5 text-amber-600" /> All-in-One Building Hub
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-0.5 text-[11px] font-medium text-amber-800 border border-amber-200/60 mb-1.5">
+            <Sparkles className="size-3 text-amber-600" /> All-in-One Building Hub
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight text-slate-900">
             26 Rooms Workspace
           </h1>
-          <p className="mt-1 text-xs text-slate-500 sm:text-sm">
+          <p className="mt-0.5 text-xs sm:text-sm text-slate-500">
             Click any room card to directly update meter readings, WiFi charges, bills, and renter profiles.
           </p>
         </div>
 
         {/* Month Picker Pills */}
-        <div className="flex items-center gap-2 self-start rounded-2xl border border-slate-200/80 bg-white p-1.5 shadow-xs sm:self-auto">
-          <Calendar className="ml-2 size-4 text-slate-400" />
-          <select
-            value={selectedMonth}
-            onChange={(e) => setSelectedMonth(e.target.value)}
-            className="cursor-pointer bg-transparent py-1 pr-3 text-xs font-semibold text-slate-800 focus:outline-none sm:text-sm"
-          >
-            {data?.availableMonths.map((m) => (
-              <option key={m} value={m}>
-                {new Date(m + '-01').toLocaleDateString('en-US', { month: 'long', year: 'numeric' })} ({m})
-              </option>
-            ))}
-          </select>
+        <div className="flex items-center justify-between sm:justify-start gap-2 self-stretch sm:self-auto rounded-2xl border border-slate-200/80 bg-white p-1.5 shadow-xs">
+          <div className="flex items-center gap-1.5">
+            <Calendar className="ml-1 size-3.5 sm:size-4 text-slate-400 shrink-0" />
+            <select
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              className="cursor-pointer bg-transparent py-1 pr-2 text-xs font-semibold text-slate-800 focus:outline-none sm:text-sm"
+            >
+              {data?.availableMonths.map((m) => (
+                <option key={m} value={m}>
+                  {new Date(m + '-01').toLocaleDateString('en-US', { month: 'short', year: 'numeric' })} ({m})
+                </option>
+              ))}
+            </select>
+          </div>
           <button
             type="button"
             onClick={() => loadDashboard(selectedMonth)}
@@ -766,77 +768,77 @@ export function DashboardPage() {
 
       {/* ----------------- Summary Stat Chips (Claude-style soft cards) ----------------- */}
       {data?.summary && (
-        <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="mt-4 sm:mt-6 grid grid-cols-2 gap-2.5 sm:gap-4 sm:grid-cols-4">
           {/* Occupancy */}
-          <div className="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
-            <div className="flex items-center justify-between text-xs font-medium text-slate-400">
+          <div className="rounded-2xl border border-slate-200/70 bg-white p-3 sm:p-4 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+            <div className="flex items-center justify-between text-[11px] sm:text-xs font-medium text-slate-400">
               <span>Occupancy</span>
-              <Users className="size-4 text-emerald-600" />
+              <Users className="size-3.5 sm:size-4 text-emerald-600" />
             </div>
-            <div className="mt-2 flex items-baseline gap-1.5">
-              <span className="text-2xl font-bold text-slate-900">{data.summary.occupiedCount}</span>
-              <span className="text-xs text-slate-400">/ 26 rooms</span>
+            <div className="mt-1.5 sm:mt-2 flex items-baseline gap-1">
+              <span className="text-lg sm:text-2xl font-bold text-slate-900">{data.summary.occupiedCount}</span>
+              <span className="text-[10px] sm:text-xs text-slate-400">/ 26</span>
             </div>
-            <div className="mt-1.5 text-[11px] text-emerald-600 font-medium">
+            <div className="mt-1 text-[10px] sm:text-[11px] text-emerald-600 font-medium truncate">
               {data.summary.vacantCount} vacant rooms
             </div>
           </div>
 
           {/* Electricity Units */}
-          <div className="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
-            <div className="flex items-center justify-between text-xs font-medium text-slate-400">
-              <span>Electricity Units</span>
-              <Zap className="size-4 text-amber-500" />
+          <div className="rounded-2xl border border-slate-200/70 bg-white p-3 sm:p-4 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+            <div className="flex items-center justify-between text-[11px] sm:text-xs font-medium text-slate-400">
+              <span>Units</span>
+              <Zap className="size-3.5 sm:size-4 text-amber-500" />
             </div>
-            <div className="mt-2 flex items-baseline gap-1.5">
-              <span className="text-2xl font-bold text-slate-900">{data.summary.totalUnits.toLocaleString()}</span>
-              <span className="text-xs text-slate-400">kWh</span>
+            <div className="mt-1.5 sm:mt-2 flex items-baseline gap-1">
+              <span className="text-lg sm:text-2xl font-bold text-slate-900">{data.summary.totalUnits.toLocaleString()}</span>
+              <span className="text-[10px] sm:text-xs text-slate-400">kWh</span>
             </div>
-            <div className="mt-1.5 text-[11px] text-amber-700 font-medium">
-              {data.summary.readingsCount} of {data.summary.occupiedCount} readings logged
+            <div className="mt-1 text-[10px] sm:text-[11px] text-amber-700 font-medium truncate">
+              {data.summary.readingsCount} of {data.summary.occupiedCount} logged
             </div>
           </div>
 
           {/* Collected */}
-          <div className="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
-            <div className="flex items-center justify-between text-xs font-medium text-slate-400">
+          <div className="rounded-2xl border border-slate-200/70 bg-white p-3 sm:p-4 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+            <div className="flex items-center justify-between text-[11px] sm:text-xs font-medium text-slate-400">
               <span>Collected</span>
-              <CheckCircle2 className="size-4 text-teal-600" />
+              <CheckCircle2 className="size-3.5 sm:size-4 text-teal-600" />
             </div>
-            <div className="mt-2 flex items-baseline gap-1.5">
-              <span className="text-2xl font-bold text-teal-700">৳{data.summary.totalCollected.toLocaleString()}</span>
+            <div className="mt-1.5 sm:mt-2 flex items-baseline gap-1">
+              <span className="text-lg sm:text-2xl font-bold text-teal-700">৳{data.summary.totalCollected.toLocaleString()}</span>
             </div>
-            <div className="mt-1.5 text-[11px] text-slate-400">
-              Total billed: ৳{data.summary.totalBilled.toLocaleString()}
+            <div className="mt-1 text-[10px] sm:text-[11px] text-slate-400 truncate">
+              Billed: ৳{data.summary.totalBilled.toLocaleString()}
             </div>
           </div>
 
           {/* Due */}
-          <div className="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
-            <div className="flex items-center justify-between text-xs font-medium text-slate-400">
-              <span>Outstanding Due</span>
-              <AlertCircle className="size-4 text-rose-500" />
+          <div className="rounded-2xl border border-slate-200/70 bg-white p-3 sm:p-4 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+            <div className="flex items-center justify-between text-[11px] sm:text-xs font-medium text-slate-400">
+              <span>Due</span>
+              <AlertCircle className="size-3.5 sm:size-4 text-rose-500" />
             </div>
-            <div className="mt-2 flex items-baseline gap-1.5">
-              <span className="text-2xl font-bold text-rose-600">৳{data.summary.totalDue.toLocaleString()}</span>
+            <div className="mt-1.5 sm:mt-2 flex items-baseline gap-1">
+              <span className="text-lg sm:text-2xl font-bold text-rose-600">৳{data.summary.totalDue.toLocaleString()}</span>
             </div>
-            <div className="mt-1.5 text-[11px] text-rose-500 font-medium">
-              {data.summary.totalDue > 0 ? 'Pending payments' : 'All cleared!'}
+            <div className="mt-1 text-[10px] sm:text-[11px] text-rose-500 font-medium truncate">
+              {data.summary.totalDue > 0 ? 'Pending dues' : 'All cleared!'}
             </div>
           </div>
         </div>
       )}
 
       {/* ----------------- Filters & Floor Pills ----------------- */}
-      <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200/60 pb-4">
+      <div className="mt-5 flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200/60 pb-3 sm:pb-4">
         {/* Floor Pills */}
-        <div className="flex flex-wrap items-center gap-1.5">
+        <div className="flex overflow-x-auto gap-1.5 scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] pb-1 sm:pb-0">
           {floors.map((floor) => (
             <button
               key={floor.value}
               type="button"
               onClick={() => setSelectedFloor(floor.value)}
-              className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-all ${
+              className={`rounded-full px-3 py-1 sm:px-3.5 sm:py-1.5 text-xs font-medium whitespace-nowrap transition-all ${
                 selectedFloor === floor.value
                   ? 'bg-slate-900 text-white shadow-xs'
                   : 'bg-white border border-slate-200/80 text-slate-600 hover:border-slate-300 hover:bg-slate-50'
@@ -847,25 +849,25 @@ export function DashboardPage() {
           ))}
         </div>
 
-        {/* Search & Quick Status Filters */}
-        <div className="flex items-center gap-2">
-          <div className="relative">
+        {/* Search & Quick Status Filters in 1 row on mobile */}
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="relative flex-1 sm:flex-initial">
             <Search className="pointer-events-none absolute left-3 top-2.5 size-3.5 text-slate-400" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search room or resident..."
-              className="h-8 w-44 rounded-full border border-slate-200/80 bg-white pl-8 pr-3 text-xs placeholder:text-slate-400 focus:border-slate-900 focus:outline-none sm:w-56"
+              className="h-8 w-full rounded-full border border-slate-200/80 bg-white pl-8 pr-3 text-xs placeholder:text-slate-400 focus:border-slate-900 focus:outline-none sm:w-56"
             />
           </div>
 
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
-            className="h-8 rounded-full border border-slate-200/80 bg-white px-3 text-xs font-medium text-slate-700 focus:border-slate-900 focus:outline-none"
+            className="h-8 rounded-full border border-slate-200/80 bg-white px-2.5 sm:px-3 text-xs font-medium text-slate-700 focus:border-slate-900 focus:outline-none shrink-0"
           >
-            <option value="all">All statuses</option>
+            <option value="all">All</option>
             <option value="occupied">Occupied</option>
             <option value="vacant">Vacant</option>
             <option value="needs_reading">Reading Needed</option>
@@ -1070,30 +1072,30 @@ export function DashboardPage() {
             onClick={(e) => e.stopPropagation()}
           >
             {/* Drawer Header */}
-            <div className="flex items-start justify-between border-b border-slate-200/80 bg-[#fbfbfc] p-6">
+            <div className="flex items-start justify-between border-b border-slate-200/80 bg-[#fbfbfc] p-3.5 sm:p-6">
               <div>
-                <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-2 sm:gap-2.5">
                   {activeRoom.resident?.photoUrl ? (
                     <img
                       src={activeRoom.resident.photoUrl}
                       alt={activeRoom.resident.fullName}
-                      className="size-10 rounded-2xl object-cover border border-slate-200 shadow-xs"
+                      className="size-9 sm:size-10 rounded-2xl object-cover border border-slate-200 shadow-xs"
                     />
                   ) : (
-                    <div className="flex size-10 items-center justify-center rounded-2xl bg-slate-900 text-xs font-bold text-white">
+                    <div className="flex size-9 sm:size-10 items-center justify-center rounded-2xl bg-slate-900 text-xs font-bold text-white">
                       {formatRoomNumber(activeRoom.roomNumber)}
                     </div>
                   )}
                   <div>
-                    <h3 className="text-xl font-bold text-slate-900">
+                    <h3 className="text-base sm:text-xl font-bold text-slate-900">
                       Room {formatRoomNumber(activeRoom.roomNumber)}
                     </h3>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-[11px] sm:text-xs text-slate-500 truncate max-w-[170px] sm:max-w-none">
                       Floor {activeRoom.floor} · {activeRoom.resident ? activeRoom.resident.fullName : 'Vacant Room'}
                     </p>
                   </div>
                   <span
-                    className={`ml-2 rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                    className={`ml-1.5 rounded-full px-2 py-0.5 text-[10px] sm:text-xs font-semibold shrink-0 ${
                       activeRoom.status === 'occupied'
                         ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                         : 'bg-slate-100 text-slate-600'
@@ -1107,18 +1109,18 @@ export function DashboardPage() {
               <button
                 type="button"
                 onClick={() => setActiveRoom(null)}
-                className="rounded-full p-2 text-slate-400 hover:bg-slate-200/60 hover:text-slate-700 transition"
+                className="rounded-full p-1.5 sm:p-2 text-slate-400 hover:bg-slate-200/60 hover:text-slate-700 transition"
               >
-                <X className="size-5" />
+                <X className="size-4 sm:size-5" />
               </button>
             </div>
 
             {/* Quick Action Navigation Tabs (Claude Pill Style) */}
-            <div className="flex items-center gap-1 border-b border-slate-100 bg-white px-6 py-2.5 overflow-x-auto">
+            <div className="flex items-center gap-1 border-b border-slate-100 bg-white px-3 sm:px-6 py-2 overflow-x-auto scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none]">
               <button
                 type="button"
                 onClick={() => setDrawerTab('renter')}
-                className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
+                className={`flex items-center gap-1.5 rounded-full px-2.5 sm:px-3.5 py-1 sm:py-1.5 text-xs font-semibold whitespace-nowrap transition ${
                   drawerTab === 'renter'
                     ? 'bg-slate-900 text-white shadow-xs'
                     : 'text-slate-600 hover:bg-slate-100'
@@ -1130,7 +1132,7 @@ export function DashboardPage() {
               <button
                 type="button"
                 onClick={() => setDrawerTab('electricity')}
-                className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
+                className={`flex items-center gap-1.5 rounded-full px-2.5 sm:px-3.5 py-1 sm:py-1.5 text-xs font-semibold whitespace-nowrap transition ${
                   drawerTab === 'electricity'
                     ? 'bg-amber-500 text-white shadow-xs'
                     : 'text-slate-600 hover:bg-slate-100'
@@ -1142,7 +1144,7 @@ export function DashboardPage() {
               <button
                 type="button"
                 onClick={() => setDrawerTab('wifi')}
-                className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
+                className={`flex items-center gap-1.5 rounded-full px-2.5 sm:px-3.5 py-1 sm:py-1.5 text-xs font-semibold whitespace-nowrap transition ${
                   drawerTab === 'wifi'
                     ? 'bg-sky-500 text-white shadow-xs'
                     : 'text-slate-600 hover:bg-slate-100'
@@ -1154,7 +1156,7 @@ export function DashboardPage() {
               <button
                 type="button"
                 onClick={() => setDrawerTab('bill')}
-                className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
+                className={`flex items-center gap-1.5 rounded-full px-2.5 sm:px-3.5 py-1 sm:py-1.5 text-xs font-semibold whitespace-nowrap transition ${
                   drawerTab === 'bill'
                     ? 'bg-indigo-600 text-white shadow-xs'
                     : 'text-slate-600 hover:bg-slate-100'
@@ -1166,7 +1168,7 @@ export function DashboardPage() {
               <button
                 type="button"
                 onClick={() => setDrawerTab('payment')}
-                className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
+                className={`flex items-center gap-1.5 rounded-full px-2.5 sm:px-3.5 py-1 sm:py-1.5 text-xs font-semibold whitespace-nowrap transition ${
                   drawerTab === 'payment'
                     ? 'bg-emerald-600 text-white shadow-xs'
                     : 'text-slate-600 hover:bg-slate-100'
@@ -1177,7 +1179,7 @@ export function DashboardPage() {
             </div>
 
             {/* Drawer Body */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+            <div className="flex-1 overflow-y-auto p-3.5 sm:p-6 space-y-5 sm:space-y-6">
               {/* TAB 0: RENTER PROFILE & DOCUMENTS */}
               {drawerTab === 'renter' && (
                 <div className="space-y-6">

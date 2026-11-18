@@ -543,54 +543,54 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
 
   return (
     <RentersShell currentPath="/residents" title="Resident profile">
-      <main className="mx-auto max-w-5xl px-5 py-8 sm:px-8 sm:py-10">
-        <Link href="/residents" className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900">
-          <ArrowLeft className="size-4" /> Back to residents
+      <main className="mx-auto max-w-5xl px-3.5 py-5 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
+        <Link href="/residents" className="inline-flex items-center gap-1.5 text-xs sm:text-sm text-slate-500 hover:text-slate-900">
+          <ArrowLeft className="size-3.5 sm:size-4" /> Back to residents
         </Link>
 
-        <div className="mt-7 flex flex-col justify-between gap-5 border-b border-slate-200 pb-7 md:flex-row md:items-end">
-          <div className="flex items-center gap-4">
-            <div className="flex size-16 items-center justify-center rounded-full bg-slate-100 text-slate-500">
-              <UserRound className="size-7" />
+        <div className="mt-4 sm:mt-6 flex flex-col justify-between gap-4 border-b border-slate-200 pb-5 sm:pb-6 md:flex-row md:items-end">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="flex size-12 sm:size-16 items-center justify-center rounded-2xl bg-slate-100 text-slate-500 shrink-0">
+              <UserRound className="size-6 sm:size-7" />
             </div>
             <div>
-              <p className="text-sm text-slate-500">Resident profile</p>
-              <h1 className="text-3xl font-semibold tracking-tight">{resident.fullName}</h1>
-              <p className="mt-1 text-sm text-slate-500">
+              <p className="text-[11px] sm:text-xs text-slate-500">Resident profile</p>
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight text-slate-950">{resident.fullName}</h1>
+              <p className="mt-0.5 text-xs text-slate-500">
                 {resident.status === 'active' ? 'Active resident' : 'Historical resident record'}
               </p>
             </div>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={openEdit}>
-              <Pencil data-icon="inline-start" /> Edit profile
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center shrink-0">
+            <Button variant="outline" size="sm" onClick={openEdit} className="w-full sm:w-auto text-xs sm:text-sm">
+              <Pencil data-icon="inline-start" className="size-3.5" /> Edit profile
             </Button>
             {resident.status === 'active' && (
-              <Button variant="outline" onClick={vacate} disabled={busy}>
+              <Button variant="outline" size="sm" onClick={vacate} disabled={busy} className="w-full sm:w-auto text-xs sm:text-sm">
                 {busy ? 'Vacating...' : 'Vacate room'}
               </Button>
             )}
           </div>
         </div>
 
-        {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
+        {error && <p className="mt-3 text-xs sm:text-sm text-red-600">{error}</p>}
 
-        <div className="mt-8 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-          <section className="rounded-2xl border border-slate-200 bg-white p-6">
-            <h2 className="font-semibold">Personal details</h2>
-            <div className="mt-6 grid gap-x-6 gap-y-5 sm:grid-cols-2">
+        <div className="mt-5 sm:mt-7 grid gap-4 sm:gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+          <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-xs">
+            <h2 className="text-sm sm:text-base font-semibold text-slate-950">Personal details</h2>
+            <div className="mt-4 sm:mt-5 grid grid-cols-2 gap-x-3 sm:gap-x-6 gap-y-3 sm:gap-y-4">
               {fields.map(([label, value]) => (
                 <div key={label}>
-                  <p className="text-xs uppercase tracking-wide text-slate-400">{label}</p>
-                  <p className="mt-1 text-sm text-slate-800">{value || 'Not provided'}</p>
+                  <p className="text-[10px] sm:text-[11px] uppercase tracking-wide text-slate-400">{label}</p>
+                  <p className="mt-0.5 text-xs sm:text-sm text-slate-800 break-words">{value || 'Not provided'}</p>
                 </div>
               ))}
             </div>
           </section>
 
-          <section className="rounded-2xl border border-slate-200 bg-white p-6">
-            <h2 className="font-semibold">Rental details</h2>
-            <dl className="mt-6 flex flex-col gap-5 text-sm">
+          <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-xs">
+            <h2 className="text-sm sm:text-base font-semibold text-slate-950">Rental details</h2>
+            <dl className="mt-4 sm:mt-5 flex flex-col gap-3 sm:gap-4 text-xs sm:text-sm">
               <div>
                 <dt className="text-xs uppercase tracking-wide text-slate-400">
                   {resident.status === 'active' ? 'Assigned room' : 'Previous room'}
@@ -679,7 +679,7 @@ export default function ResidentProfile({ params }: { params: Promise<{ id: stri
             </div>
           </div>
 
-          <div className="mt-5 grid gap-4 sm:grid-cols-4">
+          <div className="mt-5 grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
             <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5">
               <p className="text-xs text-slate-500">WiFi Name / SSID</p>
               <p className="mt-1 text-sm font-semibold text-slate-900">

@@ -824,57 +824,57 @@ export function UtilitiesPage() {
   const appliedRate = monthlyData?.cycle.additionalChargeRate ?? 1
 
   return (
-    <main className="mx-auto max-w-7xl px-5 py-8 sm:px-8 sm:py-10">
-      <section className="flex flex-col justify-between gap-5 md:flex-row md:items-end">
+    <main className="mx-auto max-w-7xl px-3.5 py-5 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
+      <section className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600">
-            <Zap aria-hidden="true" className="size-3.5" /> Electricity workspace
+          <div className="mb-2.5 inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600">
+            <Zap aria-hidden="true" className="size-3 text-slate-700" /> Electricity workspace
           </div>
-          <h2 className="text-3xl font-semibold tracking-[-0.04em] text-slate-950 sm:text-4xl">
+          <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight text-slate-950">
             Main meters &amp; room sub-meters.
           </h2>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-500 sm:text-base">
+          <p className="mt-1 max-w-2xl text-xs sm:text-sm leading-relaxed text-slate-500">
             Configure building meters and room assignments, record monthly sub-meter readings, and automatically distribute main meter electricity bills.
           </p>
         </div>
 
-        <nav aria-label="Utilities sections" className="flex flex-wrap gap-2">
+        <nav aria-label="Utilities sections" className="flex overflow-x-auto gap-1.5 scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] pb-1 sm:pb-0">
           <a
             href="#section-meter-config"
-            className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+            className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold whitespace-nowrap text-slate-700 hover:bg-slate-50"
           >
-            1. Meter Configuration
+            1. Meter Config
           </a>
           <a
             href="#section-monthly-readings"
-            className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+            className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold whitespace-nowrap text-slate-700 hover:bg-slate-50"
           >
-            2. Monthly Readings
+            2. Readings
           </a>
           <a
             href="#section-bills-distribution"
-            className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+            className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold whitespace-nowrap text-slate-700 hover:bg-slate-50"
           >
-            3. Bills &amp; Distribution
+            3. Distribution
           </a>
         </nav>
       </section>
 
-      <section aria-label="Electricity meter summary" className="mt-9 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <section aria-label="Electricity meter summary" className="mt-6 sm:mt-9 grid grid-cols-2 gap-2.5 sm:gap-4 xl:grid-cols-4">
         {configCards.map((card) => {
           const Icon = card.icon
           return (
             <article
               key={card.label}
-              className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)]"
+              className="rounded-2xl border border-slate-200 bg-white p-3 sm:p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)]"
             >
-              <div className="flex size-10 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
-                <Icon aria-hidden="true" className="size-5" />
+              <div className="flex size-8 sm:size-10 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
+                <Icon aria-hidden="true" className="size-4 sm:size-5" />
               </div>
-              <p className="mt-7 text-sm text-slate-500">{card.label}</p>
-              <div className="mt-1 flex items-baseline gap-2">
-                <p className="text-2xl font-semibold tracking-tight">{card.value}</p>
-                <p className="text-xs text-slate-400">{card.detail}</p>
+              <p className="mt-4 sm:mt-7 text-xs sm:text-sm text-slate-500">{card.label}</p>
+              <div className="mt-1 flex items-baseline gap-1.5">
+                <p className="text-lg sm:text-2xl font-bold tracking-tight text-slate-900">{card.value}</p>
+                <p className="text-[10px] sm:text-xs text-slate-400 truncate">{card.detail}</p>
               </div>
             </article>
           )
@@ -1252,7 +1252,7 @@ export function UtilitiesPage() {
 
         {/* 5-Step Workflow Progress */}
         {monthlyData && (
-          <div className="mt-4 grid gap-3 sm:grid-cols-5">
+          <div className="mt-4 grid grid-cols-2 gap-2 sm:gap-3 sm:grid-cols-3 lg:grid-cols-5">
             {[
               {
                 step: 'STEP 1',
@@ -1291,7 +1291,7 @@ export function UtilitiesPage() {
             ].map((item) => (
               <div
                 key={item.step}
-                className={`rounded-xl border p-3.5 ${
+                className={`rounded-xl border p-2.5 sm:p-3.5 ${
                   item.done
                     ? 'border-emerald-200 bg-emerald-50/50'
                     : 'border-slate-200 bg-white'

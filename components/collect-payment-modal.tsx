@@ -188,30 +188,30 @@ export function CollectPaymentModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto bg-slate-950/40 p-4 sm:items-center">
+    <div className="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto bg-slate-950/40 p-2 sm:p-4 sm:items-center">
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="collect-payment-title"
-        className="my-8 w-full max-w-2xl rounded-2xl bg-white p-6 shadow-xl sm:p-7"
+        className="my-auto w-full max-w-2xl max-h-[92vh] overflow-y-auto rounded-2xl bg-white p-4 sm:p-7 shadow-xl"
       >
-        <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-4">
+        <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-3.5">
           <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+            <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
               Payment collection · {target.billingMonth}
             </p>
-            <h3 id="collect-payment-title" className="mt-1 text-xl font-semibold text-slate-950">
+            <h3 id="collect-payment-title" className="mt-0.5 text-lg sm:text-xl font-bold text-slate-950">
               {target.residentName} · Room {formatRoomNumber(target.roomNumber)}
             </h3>
-            <p className="mt-1 text-xs text-slate-500">
-              Total Payable: <span className="font-semibold text-slate-800">{formatCurrency(target.totalPayable)}</span>
+            <p className="mt-0.5 text-xs text-slate-500">
+              Total: <span className="font-semibold text-slate-800">{formatCurrency(target.totalPayable)}</span>
               {' · '}Paid: <span className="font-semibold text-emerald-700">{formatCurrency(target.totalPaid)}</span>
-              {' · '}Remaining Due:{' '}
+              {' · '}Due:{' '}
               <span className="font-semibold text-rose-600">{formatCurrency(target.remainingDue)}</span>
             </p>
           </div>
-          <Button variant="ghost" size="icon" aria-label="Close" onClick={onClose}>
-            <X />
+          <Button variant="ghost" size="icon" aria-label="Close" onClick={onClose} className="shrink-0">
+            <X className="size-4" />
           </Button>
         </div>
 
@@ -434,13 +434,13 @@ export function CollectPaymentModal({
 
           {error && <p className="rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-700">{error}</p>}
 
-          <div className="flex items-center justify-end gap-2 border-t border-slate-100 pt-4">
-            <Button type="button" variant="outline" onClick={onClose}>
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:justify-end border-t border-slate-100 pt-4">
+            <Button type="button" variant="outline" onClick={onClose} className="w-full sm:w-auto text-xs sm:text-sm">
               Cancel
             </Button>
-            <Button type="submit" disabled={submitting}>
-              <DollarSign data-icon="inline-start" />
-              {submitting ? 'Recording...' : `Record Payment (${formatCurrency(numAmount)})`}
+            <Button type="submit" disabled={submitting} className="w-full sm:w-auto text-xs sm:text-sm">
+              <DollarSign data-icon="inline-start" className="size-3.5" />
+              {submitting ? 'Recording...' : `Record (${formatCurrency(numAmount)})`}
             </Button>
           </div>
         </form>
